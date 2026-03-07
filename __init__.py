@@ -1,16 +1,14 @@
 from .registry import ValkyrieRegistry
 
 
-PART_CODE_LENGTH = 1
-
 DATA_PART1 = [
-    ( 1, "Kiana Kaslana",        10 ),
-    ( 1, "Kallen Kaslana",          ), # range(10, 100) - автоматически
+    ( 1, "Kiana Kaslana",        50 ),
+    ( 1, "Kallen Kaslana",          ),
     ( 2, "Raiden Mei",           10 ),
     ( 2, "Yae Sakura",              ),
     ( 3, "Bronya Zaychik",          ),
     ( 4, "Murata Himeko",        20 ),
-    ( 4, "Liliya Olenyeva",      21 ), # range(20, 21)
+    ( 4, "Liliya Olenyeva",      21 ),
     ( 4, "Rozaliya Olenyeva",       ),
     ( 5, "Theresa Apocalypse",      ),
     ( 6, "Fu Hua",                  ),
@@ -35,18 +33,21 @@ DATA_PART1 = [
     (34, "Misteln Schariac",        ),
     (35, "PROMETHEUS",              ),
     (36, "Shigure Kira",            ),
+    (37, "Sirin"                    )
 ]
 
 DATA_PART2 = [
-    (37, "Sirin",                  ),
-    (202, "Senadina",              ),
-    (203, "Coralie 6626 Planck",   ),
-    (204, "Erdős Helia",           ),
-    (205, "Thelema Nutriscu",      ),
-    (206, "«Lantern»",             ),
-    (207, "Songque",               ),
-    (208, "Vita",                  ),
-    (209, "Sparkle",               )
+    (202, "Senadina",               ),
+    (203, "Coralie 6626 Planck",    ),
+    (204, "Erdős Helia",            ),
+    (205, "Thelema Nutriscu",       ),
+    (206, "«Lantern»",              ),
+    (207, "Songque",                ),
+    (208, "Vita",                   ),
+    (209, "Sparkle"                 )
 ]
+
+PART_CODE_LENGTH = 1
+VALID_SKIN_RARITY_CODES = (2, 3, 4, 5)
 
 valkyrie_db = ValkyrieRegistry(DATA_PART1, DATA_PART2)
