@@ -1,11 +1,12 @@
 from collections import defaultdict
 
 from .errors import ValkyrieNotFoundError
-from .models import PART1, PART2, Part, Valkyrie
-
+from .models import Part, Valkyrie
 
 class ValkyrieDatabase:
     def __init__(self, part1_valkyries: list[tuple], part2_valkyries: list[tuple], default_max: int = 100) -> None:
+        from . import PART1, PART2
+
         self._all_valkyries: list[Valkyrie] = []
         self._valkyrie_db: dict[tuple[int, Part], list[Valkyrie]] = defaultdict(list)
 
