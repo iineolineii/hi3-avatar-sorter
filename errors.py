@@ -1,3 +1,10 @@
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from .models import Part
+
+
 class InvalidAvatarCodeError(ValueError):
     def __init__(self, code: int | str, file_name: str):
         self.code = code
@@ -48,8 +55,8 @@ class EmptyNoteError(ValueError):
         super().__init__(f"Invalid empty note {note!r} in file name {file_name!r}")
 
 class ValkyrieNotFoundError(ValueError):
-    def __init__(self, code: int | str, battlesuit_code: int | str):
+    def __init__(self, code: int | str, part: "Part", battlesuit_code: int | str):
         self.code = code
         self.battlesuit_code = battlesuit_code
 
-        super().__init__(f"No Valkyrie found for code {code!r} containing battlesuit code {battlesuit_code!r}")
+        super().__init__(f"No Valkyrie found in part {part.no!r} with code {code!r} containing battlesuit code {battlesuit_code!r}")

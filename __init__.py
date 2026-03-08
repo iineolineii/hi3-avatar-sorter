@@ -1,7 +1,7 @@
-from .registry import ValkyrieRegistry
+from .models import Part
 
 
-DATA_PART1 = [
+PART1_VALKYRIES = [
     ( 1, "Kiana Kaslana",        50 ),
     ( 1, "Kallen Kaslana",          ),
     ( 2, "Raiden Mei",           10 ),
@@ -36,18 +36,21 @@ DATA_PART1 = [
     (37, "Sirin"                    )
 ]
 
-DATA_PART2 = [
-    (202, "Senadina",               ),
-    (203, "Coralie 6626 Planck",    ),
-    (204, "Erdős Helia",            ),
-    (205, "Thelema Nutriscu",       ),
-    (206, "«Lantern»",              ),
-    (207, "Songque",                ),
-    (208, "Vita",                   ),
-    (209, "Sparkle"                 )
+PART2_VALKYRIES = [
+    (2, "Senadina",                 ),
+    (3, "Coralie 6626 Planck",      ),
+    (4, "Erdős Helia",              ),
+    (5, "Thelema Nutriscu",         ),
+    (6, "«Lantern»",                ),
+    (7, "Songque",                  ),
+    (8, "Vita",                     ),
+    (9, "Sparkle"                   )
 ]
 
 PART_CODE_LENGTH = 1
 VALID_SKIN_RARITY_CODES = (2, 3, 4, 5)
 
-valkyrie_db = ValkyrieRegistry(DATA_PART1, DATA_PART2)
+PART1 = Part(("0", "1", "6"), 1)
+PART2 = Part(("2", "62", "202", "302"), 2)
+
+ALL_PARTS = PART2, PART1 # NOTE: DO NOT CHANGE THE ORDER!
