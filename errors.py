@@ -5,12 +5,12 @@ class InvalidAvatarCodeError(ValueError):
 
         super().__init__(f"Invalid avatar code {code!r} in file name {file_name!r}")
 
-class InvalidAdditionalInfoError(ValueError):
-    def __init__(self, name_parts, file_name: str):
-        self.name_parts = name_parts
+class InvalidExtraInfoError(ValueError):
+    def __init__(self, info_parts, file_name: str):
+        self.name_parts = info_parts
         self.file_name = file_name
 
-        super().__init__(f"Invalid additional info {name_parts!r} in file name {file_name!r}")
+        super().__init__(f"Invalid extra info {info_parts!r} in file name {file_name!r}")
 
 class MissingSkinRarityCodeError(ValueError):
     def __init__(self, skin_code: int | str, file_name: str):
