@@ -36,7 +36,7 @@ PART1_VALKYRIES = [
     (37, "Sirin"                  )
 ]
 
-PART2_VALKYRIES = [
+PART2_VALKYRIES: list[tuple[int, str] | tuple[int, str, int]] = [
     (2, "Senadina",               ),
     (3, "Coralie 6626 Planck",    ),
     (4, "Erdős Helia",            ),
@@ -50,8 +50,8 @@ PART2_VALKYRIES = [
 PART_CODE_LENGTH = 1
 VALID_SKIN_RARITY_CODES = (2, 3, 4, 5)
 
-PART1 = Part(("0", "1", "6"), 1)
-PART2 = Part(("2", "62", "202", "302"), 2)
+PART1 = Part("0", "6", 1)
+PART2 = Part(("2", "62"), ("202", "302"), 2)
 ALL_PARTS = PART2, PART1 # NOTE: DO NOT CHANGE THE ORDER!
 
 VALKYRIE_DB = ValkyrieDatabase(PART1_VALKYRIES, PART2_VALKYRIES)

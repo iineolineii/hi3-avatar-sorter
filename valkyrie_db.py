@@ -1,17 +1,27 @@
 from collections import defaultdict
+from typing import TYPE_CHECKING
+
+from .models import Part
 
 from .errors import ValkyrieNotFoundError
-from .models import Part, Valkyrie
+
+if TYPE_CHECKING:
+    from .models import Valkyrie
 
 class ValkyrieDatabase:
-    def __init__(self, part1_valkyries: list[tuple], part2_valkyries: list[tuple], default_max: int = 100) -> None:
+    def __init__(
+        self,
+        part1_valkyries: list[tuple[int, str] | tuple[int, str, int]],
+        part2_valkyries: list[tuple[int, str] | tuple[int, str, int]],
+        default_max: int = 100,
+    ) -> None:
         from . import PART1, PART2
 
-        self._all_valkyries: list[Valkyrie] = []
-        self._valkyrie_db: dict[tuple[int, Part], list[Valkyrie]] = defaultdict(list)
+        self._all_valkyries: list["Valkyrie"] = []
+        self._valkyrie_db: dict[tuple[int, "Part"], list["Valkyrie"]] = defaultdict(list)
 
         # Store range start for each code
-        range_starts: dict[tuple[int, Part], int] = {}
+        range_starts: dict[tuple[int, "Part"], int] = {}
 
         # Merge raw data preserving the order
         valkyries = [(part1_valkyries, PART1), (part2_valkyries, PART2)]
@@ -26,7 +36,7 @@ class ValkyrieDatabase:
                 start = range_starts.get((code, part), 0)
                 end = raw[2] if len(raw) > 2 else default_max
 
-                valkyrie = Valkyrie(
+                valkyrie = valkyrie(
                     code=code,
                     name=name,
                     part=part,
@@ -40,8 +50,7 @@ class ValkyrieDatabase:
                 # Current end is the next start
                 range_starts[(code, part)] = end
 
-
-    def get(self, code: int, part: Part, battlesuit_code: int) -> Valkyrie:
+    def get(self, code: int, battlesuit_code: int, part: "Part") -> "Valkyrie":
         candidates = self._valkyrie_db.get((code, part), [])
 
         for valkyrie in candidates:
@@ -50,5 +59,5 @@ class ValkyrieDatabase:
 
         raise ValkyrieNotFoundError(code, part, battlesuit_code)
 
-    def all(self) -> list[Valkyrie]:
+    def all(self) -> list["Valkyrie"]:
         return self._all_valkyries
