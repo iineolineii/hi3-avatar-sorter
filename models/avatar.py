@@ -56,7 +56,7 @@ class Avatar:
                 if note_or_skin_rarity_code.isnumeric():
                     skin_rarity_code = cls._validate_skin_rarity_code(note_or_skin_rarity_code, file_name)
                 else:
-                    note = cls._validate_note(note_or_skin_rarity_code, file_name)
+                    note = cls.format_note(note_or_skin_rarity_code, file_name)
 
             case [skin_rarity_code, skin_code]:
                 skin_rarity_code = cls._validate_skin_rarity_code(skin_rarity_code, file_name)
@@ -65,7 +65,7 @@ class Avatar:
             case [skin_rarity_code, skin_code, note]:
                 skin_rarity_code = cls._validate_skin_rarity_code(skin_rarity_code, file_name)
                 skin_code = cls._validate_skin_code(skin_code, file_name)
-                note = cls._validate_note(note, file_name)
+                note = cls.format_note(note, file_name)
 
             case _:
                 raise InvalidExtraInfoError(info_parts, file_name)
@@ -98,7 +98,7 @@ class Avatar:
         raise InvalidSkinCodeError(skin_code, file_name)
 
     @staticmethod
-    def _validate_note(note: str, file_name: str) -> str:
+    def format_note(note: str, file_name: str) -> str:
         if note.lower() == "b":
             return "Veliona"
 
