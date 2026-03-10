@@ -1,13 +1,15 @@
-from ..relationships import OneToMany
-from .valkyrie import Valkyrie
-
-
 import re
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+
+from frozendict import frozendict
+
+if TYPE_CHECKING:
+    from ..relationships import OneToMany
+    from .valkyrie import Valkyrie
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Part(OneToMany["Valkyrie"]):
     codes_short: str | tuple[str, ...]
     codes_long:  str | tuple[str, ...]
@@ -36,6 +38,15 @@ class Part(OneToMany["Valkyrie"]):
             r"(?P<battlesuit_code>\d{2})"
         ))
 
+
+    # We don't use default_factory here because this field
+    # will be replaced by _children in Container.__post_init__
+    valkyries: frozendict[int, "Valkyrie"] = frozendict()
+    """
+    This field should not be updated from outside.
+    Instead, use the `add_valkyrie` method
+    """
+
     @classmethod
     def by_code(cls, code: str, format: Literal["short", "long"] = "long") -> "Part | None":
         from .. import ALL_PARTS
@@ -50,3 +61,6 @@ class Part(OneToMany["Valkyrie"]):
 
             if code in codes:
                 return part
+
+    def add_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
+        return self._add_child(valkyrie)

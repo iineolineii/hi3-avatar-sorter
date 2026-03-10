@@ -1,22 +1,23 @@
-from ..relationships import ManyToOne, OneToMany
-from .battlesuit import Battlesuit
-from .skin import Skin
-
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from frozendict import frozendict
 
+from ..relationships import ManyToOne, OneToMany
 
-from dataclasses import dataclass, field
+if TYPE_CHECKING:
+    from .battlesuit import Battlesuit
+    from .skin import Skin
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
     code: int
 
     no: int = field(init=False)
 
     # We don't use default_factory here because this field
-    # will be replaced by __children in Container.__post_init__
+    # will be replaced by _children in Container.__post_init__
     skins: frozendict[int, "Skin"] = frozendict()
     """
     This field should not be updated from outside.
@@ -27,12 +28,9 @@ class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
     def by_code(
         cls,
         code: int,
-        battlesuit: Battlesuit
+        battlesuit: "Battlesuit"
     ):
-        if code in battlesuit.skins_rarities:
-            return battlesuit.skins_rarities[code]
-
-        return cls(code)
+        return super().by_code(code, battlesuit)
 
     def add_skin(self, skin: "Skin") -> "Skin":
         return self._add_child(skin)

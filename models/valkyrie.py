@@ -1,21 +1,24 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from frozendict import frozendict
 
 from ..relationships import ManyToOne, OneToMany
 from ..valkyrie_db import ValkyrieDatabase
-from .battlesuit import Battlesuit
-from .part import Part
+
+if TYPE_CHECKING:
+    from .battlesuit import Battlesuit
+    from .part import Part
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     name: str
     part: "Part"
     battlesuit_code_range: range
 
     # We don't use default_factory here because this field
-    # will be replaced by __children in Container.__post_init__
+    # will be replaced by _children in Container.__post_init__
     battlesuits: frozendict[int, "Battlesuit"] = frozendict()
     """
     This field should not be updated from outside.
@@ -23,14 +26,14 @@ class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     """
 
     @classmethod
-    def by_code(
+    def by_code( # pyright: ignore[reportIncompatibleMethodOverride]
         cls,
         code: int,
         battlesuit_code: int,
         part: "Part",
-        valkyrie_db: "ValkyrieDatabase" = ... # pyright: ignore[reportArgumentType]
+        valkyrie_db: "ValkyrieDatabase" = None # pyright: ignore[reportArgumentType]
     ):
-        if valkyrie_db is ...:
+        if valkyrie_db is None:
             from .. import VALKYRIE_DB as valkyrie_db
 
         valkyrie_db.get(code, battlesuit_code, part)
