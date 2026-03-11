@@ -12,9 +12,7 @@ if TYPE_CHECKING:
 
 @dataclass(kw_only=True)
 class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
-    code: int
-
-    no: int = field(init=False)
+    id: int
 
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
@@ -25,12 +23,12 @@ class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
     """
 
     @classmethod
-    def by_code(
+    def by_id(
         cls,
-        code: int,
+        id: int,
         battlesuit: "Battlesuit"
     ):
-        return super().by_code(code, battlesuit)
+        return super().by_id(id, battlesuit)
 
     def add_skin(self, skin: "Skin") -> "Skin":
         return self._add_child(skin)

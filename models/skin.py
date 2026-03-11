@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 @dataclass(kw_only=True)
 class Skin(ManyToOne["SkinRarity"]):
     @classmethod
-    def by_code(
+    def by_id(
         cls,
-        code: int,
+        id: int,
         skin_rarity: "SkinRarity"
     ):
-        return super().by_code(code, skin_rarity)
+        return super().by_id(id, skin_rarity)

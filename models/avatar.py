@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Self
 
 from .. import ALL_PARTS
-from ..errors import EmptyNoteError, MissingSkinCodeError, MissingSkinRarityCodeError
+from ..errors import EmptyNoteError, InvalidAvatarIdError, InvalidBattlesuitIdError, InvalidExtraInfoError, InvalidPartIdError, InvalidSkinIdError, InvalidSkinRarityIdError, InvalidValkyrieIdError, MissingSkinIdError, MissingSkinRarityIdError, ReserveMissingBattlesuitNo, ReserveMissingPartNo, ReserveMissingSkinRarityNo, ReserveMissingValkyrieNo
 from ..valkyrie_db import ValkyrieDatabase
 
 if TYPE_CHECKING:
     from . import Battlesuit, Part, Skin, SkinRarity, Valkyrie
 
-@dataclass(kw_only=True)
+@dataclass
 class Avatar:
     part:        "Part"
     valkyrie:    "Valkyrie"
@@ -53,19 +53,19 @@ class Avatar:
     def from_raw(
         cls,
         file_name: str,
-        part_code:        str,
-        valkyrie_code:    int,
-        battlesuit_code:  int,
-        skin_rarity_code: int | None = None,
-        skin_code:        int | None = None,
+        part_id:        str,
+        valkyrie_id:    int,
+        battlesuit_id:  int,
+        skin_rarity_id: int | None = None,
+        skin_id:        int | None = None,
         raw_note:         str | None = None,
         *,
         format: Literal["short", "long"] = "long"
     ) -> Self:
-        part = cls._resolve_part(part_code, format, file_name)
-        valkyrie = cls._resolve_valkyrie(valkyrie_code, battlesuit_code, part, file_name)
-        battlesuit = cls._resolve_battlesuit(battlesuit_code, valkyrie, file_name)
-        skin_rarity, skin = cls._resolve_rarity_and_skin(skin_rarity_code, skin_code, battlesuit, file_name)
+        part = cls._resolve_part(part_id, format, file_name)
+        valkyrie = cls._resolve_valkyrie(valkyrie_id, battlesuit_id, part, file_name)
+        battlesuit = cls._resolve_battlesuit(battlesuit_id, valkyrie, file_name)
+        skin_rarity, skin = cls._resolve_rarity_and_skin(skin_rarity_id, skin_id, battlesuit, file_name)
 
         note = cls._format_note(raw_note, file_name)
 
@@ -83,85 +83,85 @@ class Avatar:
 
     def _check_children_no(self):
         if self.part.no is None:
-            raise ReserveMissingPartNo(self) # Failed to reserve avatar ... because the .part.no field is missing
+            raise ReserveMissingPartNo(self)
 
         if self.valkyrie.no is None:
-            raise ReserveMissingValkyrieNo(self) # Failed to reserve avatar ... because the .valkyrie.no field is missing
+            raise ReserveMissingValkyrieNo(self)
 
         if self.skin_rarity is None or self.skin is None:
             return
 
         if self.battlesuit.no is None:
-            raise ReserveMissingBattlesuitNo(self) # Failed to reserve avatar ... because the .battlesuit.no field is missing
+            raise ReserveMissingBattlesuitNo(self)
 
         if self.skin_rarity.no is None:
-            raise ReserveMissingSkinRarityNo(self) # Failed to reserve avatar ... because the .skin_rarity.no field is missing
+            raise ReserveMissingSkinRarityNo(self)
 
 
     @classmethod
-    def _resolve_part(cls, part_code: str, format: Literal["short", "long"], file_name: str) -> "Part":
-        part = Part.by_code(part_code, format)
+    def _resolve_part(cls, part_id: str, format: Literal["short", "long"], file_name: str) -> "Part":
+        part = Part.by_id(part_id, format)
 
         if part is None:
-            raise InvalidPartCodeError(part_code, file_name)
+            raise InvalidPartIdError(part_id, file_name)
 
         return part
 
     @classmethod
     def _resolve_valkyrie(
         cls,
-        valkyrie_code: int,
-        battlesuit_code: int,
+        valkyrie_id: int,
+        battlesuit_id: int,
         part: "Part",
         file_name: str
     ) -> "Valkyrie":
-        valkyrie = Valkyrie.by_code(valkyrie_code, battlesuit_code, part)
+        valkyrie = Valkyrie.by_id(valkyrie_id, battlesuit_id, part)
 
         if valkyrie is None:
-            raise InvalidValkyrieCodeError(valkyrie_code, file_name)
+            raise InvalidValkyrieIdError(valkyrie_id, file_name)
 
         return valkyrie
 
     @classmethod
     def _resolve_battlesuit(
         cls,
-        battlesuit_code: int,
+        battlesuit_id: int,
         valkyrie: "Valkyrie",
         file_name: str
     ) -> "Battlesuit":
-        battlesuit = Battlesuit.by_code(battlesuit_code, valkyrie)
+        battlesuit = Battlesuit.by_id(battlesuit_id, valkyrie)
 
         if battlesuit is None:
-            raise InvalidBattlesuitCodeError(battlesuit_code, file_name)
+            raise InvalidBattlesuitIdError(battlesuit_id, file_name)
 
         return battlesuit
 
     @classmethod
     def _resolve_rarity_and_skin(
         cls,
-        skin_rarity_code: int | None,
-        skin_code: int | None,
+        skin_rarity_id: int | None,
+        skin_id: int | None,
         battlesuit: "Battlesuit",
         file_name: str
     ) -> tuple[None, None] | tuple["SkinRarity", "Skin"]:
-        match (skin_rarity_code, skin_code):
+        match (skin_rarity_id, skin_id):
             case (None, None):
                 skin_rarity = skin = None
 
-            case (skin_rarity_code, None):
-                raise MissingSkinCodeError(skin_rarity_code, file_name)
+            case (skin_rarity_id, None):
+                raise MissingSkinIdError(skin_rarity_id, file_name)
 
-            case (None, skin_code):
-                raise MissingSkinRarityCodeError(skin_code, file_name)
+            case (None, skin_id):
+                raise MissingSkinRarityIdError(skin_id, file_name)
 
             case _:
-                skin_rarity = SkinRarity.by_code(skin_rarity_code, battlesuit)
+                skin_rarity = SkinRarity.by_id(skin_rarity_id, battlesuit)
                 if skin_rarity is None:
-                    raise InvalidSkinRarityCodeError(skin_rarity_code, file_name)
+                    raise InvalidSkinRarityIdError(skin_rarity_id, file_name)
 
-                skin = Skin.by_code(skin_code, skin_rarity)
+                skin = Skin.by_id(skin_id, skin_rarity)
                 if skin is None:
-                    raise InvalidSkinCodeError(skin_code, file_name)
+                    raise InvalidSkinIdError(skin_id, file_name)
 
         return (skin_rarity, skin) # pyright: ignore[reportReturnType]
 
@@ -187,35 +187,35 @@ class Avatar:
         format: Literal["short", "long"] = "long"
     ) -> tuple[str, dict[str, Any]]:
         file_name = Path(file).name
-        code, *extra_info_parts = file_name.split("_", maxsplit=3)
+        id, *extra_info_parts = file_name.split("_", maxsplit=3)
 
-        part_code, valkyrie_code, battlesuit_code = cls._parse_avatar_code(code, file_name, format)
-        skin_rarity_code, skin_code, raw_note = cls._parse_extra_info(extra_info_parts, file_name)
+        part_id, valkyrie_id, battlesuit_id = cls._parse_avatar_id(id, file_name, format)
+        skin_rarity_id, skin_id, raw_note = cls._parse_extra_info(extra_info_parts, file_name)
 
         return file_name, {
-            "part_code":        part_code,
-            "valkyrie_code":    valkyrie_code,
-            "battlesuit_code":  battlesuit_code,
-            "skin_rarity_code": skin_rarity_code,
-            "skin_code":        skin_code,
+            "part_id":        part_id,
+            "valkyrie_id":    valkyrie_id,
+            "battlesuit_id":  battlesuit_id,
+            "skin_rarity_id": skin_rarity_id,
+            "skin_id":        skin_id,
             "raw_note":         raw_note,
             "format":           format
         }
 
 
     @staticmethod
-    def _parse_avatar_code(code: str, file_name: str, format: Literal["short", "long"]) -> tuple[Part, int, int]:
+    def _parse_avatar_id(id: str, file_name: str, format: Literal["short", "long"]) -> tuple[Part, int, int]:
         for part in ALL_PARTS:
             pattern = part.pattern_short if format == "short" else part.pattern_long
 
-            if match := pattern.match(code.rjust(5, "0")):
+            if match := pattern.match(id.rjust(5, "0")):
                 match_dict      = match.groupdict()
-                valkyrie_code   = int(match_dict["valkyrie_code"])
-                battlesuit_code = int(match_dict["battlesuit_code"])
+                valkyrie_id   = int(match_dict["valkyrie_id"])
+                battlesuit_id = int(match_dict["battlesuit_id"])
 
-                return part, valkyrie_code, battlesuit_code
+                return part, valkyrie_id, battlesuit_id
 
-        raise InvalidAvatarCodeError(code, file_name)
+        raise InvalidAvatarIdError(id, file_name)
 
     @classmethod
     def _parse_extra_info(
@@ -228,16 +228,16 @@ class Avatar:
         | tuple[None, None, str]
         | tuple[None, None, None]
     ):
-        skin_rarity_code: str | None
-        skin_code: str | None
+        skin_rarity_id: str | None
+        skin_id: str | None
         note: str | None
 
         match info_parts:
-            case [skin_rarity_code, skin_code, note]:
-                return skin_rarity_code, skin_code, note
+            case [skin_rarity_id, skin_id, note]:
+                return skin_rarity_id, skin_id, note
 
-            case [skin_rarity_code, skin_code]:
-                return skin_rarity_code, skin_code, None
+            case [skin_rarity_id, skin_id]:
+                return skin_rarity_id, skin_id, None
 
             case [note]:
                 return None, None, note
@@ -250,11 +250,12 @@ class Avatar:
 
 
     def __iter__(self):
-        return iter(
-            (self.part.no, self.valkyrie.code, self.battlesuit.code)
-            + (
-                (self.skin_rarity.code, self.skin.code, self.note)
-                if (self.skin_rarity is not None and self.skin is not None)
-                else (self.note,)
-            )
-        )
+        result = (self.part.no, self.valkyrie.id, self.battlesuit.id)
+
+        if self.skin_rarity is not None and self.skin is not None:
+            result += (self.skin_rarity.id, self.skin.id)
+
+        if self.note:
+            result += (self.note,)
+
+        return iter(result)

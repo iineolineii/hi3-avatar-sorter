@@ -1,6 +1,7 @@
 import re
+from collections.abc import Hashable, Iterable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from frozendict import frozendict
 
@@ -9,10 +10,14 @@ if TYPE_CHECKING:
     from .valkyrie import Valkyrie
 
 
+class HashableIterable[T](Hashable, Iterable[T], Protocol):
+    pass
+
+
 @dataclass(kw_only=True)
 class Part(OneToMany["Valkyrie"]):
-    codes_short: str | tuple[str, ...]
-    codes_long:  str | tuple[str, ...]
+    ids_short: HashableIterable[str]
+    ids_long:  HashableIterable[str]
     no: int
 
     pattern_short: re.Pattern = field(init=False)
@@ -20,22 +25,22 @@ class Part(OneToMany["Valkyrie"]):
 
     def __post_init__(self):
         object.__setattr__(self, "pattern_short", re.compile(
-            f"(?P<part_code>{'|'.join(sorted(
-                self.codes_short,
+            f"(?P<part_id>{'|'.join(sorted(
+                self.ids_short,
                 key=len,
                 reverse=True
             ))})"
-            r"(?P<valkyrie_code>\d{2})"
-            r"(?P<battlesuit_code>\d{2})"
+            r"(?P<valkyrie_id>\d{2})"
+            r"(?P<battlesuit_id>\d{2})"
         ))
         object.__setattr__(self, "pattern_long", re.compile(
-            f"(?P<part_code>{'|'.join(sorted(
-                self.codes_long,
+            f"(?P<part_id>{'|'.join(sorted(
+                self.ids_long,
                 key=len,
                 reverse=True
             ))})"
-            r"(?P<valkyrie_code>\d{2})"
-            r"(?P<battlesuit_code>\d{2})"
+            r"(?P<valkyrie_id>\d{2})"
+            r"(?P<battlesuit_id>\d{2})"
         ))
 
 
@@ -48,18 +53,18 @@ class Part(OneToMany["Valkyrie"]):
     """
 
     @classmethod
-    def by_code(cls, code: str, format: Literal["short", "long"] = "long") -> "Part | None":
+    def by_id(cls, id: str, format: Literal["short", "long"] = "long") -> "Part | None":
         from .. import ALL_PARTS
 
         for part in ALL_PARTS:
             if format == "short":
-                codes = part.codes_short
+                ids = part.ids_short
             elif format == "long":
-                codes = part.codes_long
+                ids = part.ids_long
             else:
                 raise InvalidFormatError(format)
 
-            if code in codes:
+            if id in ids:
                 return part
 
     def add_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":

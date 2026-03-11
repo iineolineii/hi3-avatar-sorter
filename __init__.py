@@ -2,7 +2,7 @@ from .models import Part
 from .valkyrie_db import ValkyrieDatabase
 
 PART1_VALKYRIES = [
-    ( 1, "Kiana Kaslana",      10 ),
+    ( 1, "Kiana Kaslana",      50 ), # Changed from 10 because of NOTE#1
     ( 1, "Kallen Kaslana",        ),
     ( 2, "Raiden Mei",         10 ),
     ( 2, "Yae Sakura",            ),
@@ -47,11 +47,11 @@ PART2_VALKYRIES: list[tuple[int, str] | tuple[int, str, int]] = [
     (9, "Sparkle"                 )
 ]
 
-PART_CODE_LENGTH = 1
-VALID_SKIN_RARITY_CODES = (2, 3, 4, 5)
+PART_id_LENGTH = 1
+VALID_SKIN_RARITY_idS = (2, 3, 4, 5)
 
-PART1 = Part("0", "6", 1)
-PART2 = Part(("2", "62"), ("202", "302"), 2)
-ALL_PARTS = PART2, PART1 # NOTE: DO NOT CHANGE THE ORDER!
+PART1 = Part(ids_short="0", ids_long="6", no=1)
+PART2 = Part(ids_short=("2", "62"), ids_long=("202", "302"), no=2)
+ALL_PARTS = PART2, PART1
 
 VALKYRIE_DB = ValkyrieDatabase(PART1_VALKYRIES, PART2_VALKYRIES)

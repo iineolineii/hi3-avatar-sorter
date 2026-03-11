@@ -9,17 +9,17 @@ ParentT = TypeVar("ParentT", bound="OneToMany")
 
 @dataclass(kw_only=True)
 class ManyToOne(Generic[ParentT]):
-    code: int
+    id: int
     no: int = field(default=None) # pyright: ignore[reportAssignmentType]
 
     @classmethod
-    def by_code(
+    def by_id(
         cls,
-        code: int,
+        child_id: int,
         parent: ParentT,
         /
     ) -> Self:
-        if code in parent._children:
-            return parent._children[code] # pyright: ignore[reportReturnType]
+        if child_id in parent._children:
+            return parent._children[child_id] # pyright: ignore[reportReturnType]
 
-        return cls(code)
+        return cls(id=child_id)

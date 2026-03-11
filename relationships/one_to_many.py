@@ -51,12 +51,12 @@ class OneToMany(Generic[ChildT]):
         child.no = getattr(child, "no", self.__mex_child_no)
         self.__children_numbers.add(child.no)
         self._update_mex(child.no)
-        self._children[child.code] = child
+        self._children[child.id] = child
         return child
 
     def _add_child_lazy(self, child: ChildT) -> ChildT:
         child.no = getattr(child, "no", len(self._children) + 1)
-        self._children[child.code] = child
+        self._children[child.id] = child
         return child
 
     def _update_mex(self, child_no: int) -> None:

@@ -2,12 +2,12 @@ from typing import TYPE_CHECKING
 
 from ..errors import (
     EmptyNoteError,
-    InvalidAvatarCodeError,
+    InvalidAvatarIdError,
     InvalidExtraInfoError,
-    InvalidSkinCodeError,
-    InvalidSkinRarityCodeError,
-    MissingSkinCodeError,
-    MissingSkinRarityCodeError,
+    InvalidSkinIdError,
+    InvalidSkinRarityIdError,
+    MissingSkinIdError,
+    MissingSkinRarityIdError,
 )
 
 if TYPE_CHECKING:
@@ -22,18 +22,18 @@ class Avatar:
     note:         str        | None  = None
 
     @staticmethod
-    def _parse_avatar_code(code: str, file_name: str) -> tuple[Part, int, int]:
+    def _parse_avatar_id(id: str, file_name: str) -> tuple[Part, int, int]:
         from .. import ALL_PARTS
 
         for part in ALL_PARTS:
-            if match := part.pattern.match(code.rjust(5, "0")):
+            if match := part.pattern.match(id.rjust(5, "0")):
                 match_dict      = match.groupdict()
-                valkyrie_code   = int(match_dict["valkyrie_code"])
-                battlesuit_code = int(match_dict["battlesuit_code"])
+                valkyrie_id   = int(match_dict["valkyrie_id"])
+                battlesuit_id = int(match_dict["battlesuit_id"])
 
-                return part, valkyrie_code, battlesuit_code
+                return part, valkyrie_id, battlesuit_id
 
-        raise InvalidAvatarCodeError(code, file_name)
+        raise InvalidAvatarIdError(id, file_name)
 
     @classmethod
     def _parse_extra_info(
@@ -44,58 +44,58 @@ class Avatar:
         if not info_parts:
             return None, None, None
 
-        skin_rarity_code: str | None = None
-        skin_code:        str | None = None
+        skin_rarity_id: str | None = None
+        skin_id:        str | None = None
         note:             str | None = None
 
         match info_parts:
             case []:
                 return None, None, None
 
-            case [note_or_skin_rarity_code]:
-                if note_or_skin_rarity_code.isnumeric():
-                    skin_rarity_code = cls._validate_skin_rarity_code(note_or_skin_rarity_code, file_name)
+            case [note_or_skin_rarity_id]:
+                if note_or_skin_rarity_id.isnumeric():
+                    skin_rarity_id = cls._validate_skin_rarity_id(note_or_skin_rarity_id, file_name)
                 else:
-                    note = cls.format_note(note_or_skin_rarity_code, file_name)
+                    note = cls.format_note(note_or_skin_rarity_id, file_name)
 
-            case [skin_rarity_code, skin_code]:
-                skin_rarity_code = cls._validate_skin_rarity_code(skin_rarity_code, file_name)
-                skin_code = cls._validate_skin_code(skin_code, file_name)
+            case [skin_rarity_id, skin_id]:
+                skin_rarity_id = cls._validate_skin_rarity_id(skin_rarity_id, file_name)
+                skin_id = cls._validate_skin_id(skin_id, file_name)
 
-            case [skin_rarity_code, skin_code, note]:
-                skin_rarity_code = cls._validate_skin_rarity_code(skin_rarity_code, file_name)
-                skin_code = cls._validate_skin_code(skin_code, file_name)
+            case [skin_rarity_id, skin_id, note]:
+                skin_rarity_id = cls._validate_skin_rarity_id(skin_rarity_id, file_name)
+                skin_id = cls._validate_skin_id(skin_id, file_name)
                 note = cls.format_note(note, file_name)
 
             case _:
                 raise InvalidExtraInfoError(info_parts, file_name)
 
-        if skin_rarity_code is None:
-            if skin_code is None:
+        if skin_rarity_id is None:
+            if skin_id is None:
                 return None, None, note
 
-            raise MissingSkinRarityCodeError(skin_code, file_name)
+            raise MissingSkinRarityIdError(skin_id, file_name)
 
-        if skin_code is None:
-            raise MissingSkinCodeError(skin_rarity_code, file_name)
+        if skin_id is None:
+            raise MissingSkinIdError(skin_rarity_id, file_name)
 
-        return int(skin_rarity_code), int(skin_code), note
-
-    @staticmethod
-    def _validate_skin_rarity_code(skin_rarity_code: str, file_name: str) -> str:
-        from .. import VALID_SKIN_RARITY_CODES
-
-        if skin_rarity_code.isnumeric() and int(skin_rarity_code) in VALID_SKIN_RARITY_CODES:
-            return skin_rarity_code
-
-        raise InvalidSkinRarityCodeError(skin_rarity_code, file_name)
+        return int(skin_rarity_id), int(skin_id), note
 
     @staticmethod
-    def _validate_skin_code(skin_code: str, file_name: str) -> str:
-        if skin_code.isnumeric():
-            return skin_code
+    def _validate_skin_rarity_id(skin_rarity_id: str, file_name: str) -> str:
+        from .. import VALID_SKIN_RARITY_idS
 
-        raise InvalidSkinCodeError(skin_code, file_name)
+        if skin_rarity_id.isnumeric() and int(skin_rarity_id) in VALID_SKIN_RARITY_idS:
+            return skin_rarity_id
+
+        raise InvalidSkinRarityIdError(skin_rarity_id, file_name)
+
+    @staticmethod
+    def _validate_skin_id(skin_id: str, file_name: str) -> str:
+        if skin_id.isnumeric():
+            return skin_id
+
+        raise InvalidSkinIdError(skin_id, file_name)
 
     @staticmethod
     def format_note(note: str, file_name: str) -> str:
@@ -109,9 +109,9 @@ class Avatar:
 
     def __iter__(self):
         return iter(
-            (self.part.no, self.valkyrie.code, self.battlesuit.code)
+            (self.part.no, self.valkyrie.id, self.battlesuit.id)
             + (
-                (self.skin_rarity.code, self.skin.code, self.note)
+                (self.skin_rarity.id, self.skin.id, self.note)
                 if (self.skin_rarity is not None and self.skin is not None)
                 else (self.note,)
             )

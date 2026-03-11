@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     name: str
     part: "Part"
-    battlesuit_code_range: range
+    battlesuit_id_range: range
 
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
@@ -26,17 +26,17 @@ class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     """
 
     @classmethod
-    def by_code( # pyright: ignore[reportIncompatibleMethodOverride]
+    def by_id( # pyright: ignore[reportIncompatibleMethodOverride]
         cls,
-        code: int,
-        battlesuit_code: int,
+        id: int,
+        battlesuit_id: int,
         part: "Part",
         valkyrie_db: "ValkyrieDatabase" = None # pyright: ignore[reportArgumentType]
     ):
         if valkyrie_db is None:
             from .. import VALKYRIE_DB as valkyrie_db
 
-        valkyrie_db.get(code, battlesuit_code, part)
+        valkyrie_db.get(id, battlesuit_id, part)
 
     def add_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
         return self._add_child(battlesuit)
