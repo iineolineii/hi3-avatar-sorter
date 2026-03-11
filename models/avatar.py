@@ -83,20 +83,19 @@ class Avatar:
 
     def _check_children_no(self):
         if self.part.no is None:
-            raise ReserveMissingPartNo(self) # Failed to reserve part for avatar ... because the no field is missing
+            raise ReserveMissingPartNo(self) # Failed to reserve avatar ... because the .part.no field is missing
 
         if self.valkyrie.no is None:
-            raise ReserveMissingValkyrieNo(self) # Failed to reserve valkyrie for avatar ... because the no field is missing
-
+            raise ReserveMissingValkyrieNo(self) # Failed to reserve avatar ... because the .valkyrie.no field is missing
 
         if self.skin_rarity is None or self.skin is None:
             return
 
         if self.battlesuit.no is None:
-            raise ReserveMissingBattlesuitNo(self) # Failed to reserve battlesuit for avatar ... because the no field is missing
+            raise ReserveMissingBattlesuitNo(self) # Failed to reserve avatar ... because the .battlesuit.no field is missing
 
         if self.skin_rarity.no is None:
-            raise ReserveMissingSkinRarityNo(self) # Failed to reserve skin rarity for avatar ... because the no field is missing
+            raise ReserveMissingSkinRarityNo(self) # Failed to reserve avatar ... because the .skin_rarity.no field is missing
 
 
     @classmethod

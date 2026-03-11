@@ -19,20 +19,6 @@ class InvalidExtraInfoError(ValueError):
 
         super().__init__(f"Invalid extra info {info_parts!r} in file name {file_name!r}")
 
-class MissingSkinRarityCodeError(ValueError):
-    def __init__(self, skin_code: int | str, file_name: str):
-        self.skin_code = skin_code
-        self.file_name = file_name
-
-        super().__init__(f"Missing rarity code for skin code {skin_code!r} in file name {file_name!r}")
-
-class MissingSkinCodeError(ValueError):
-    def __init__(self, skin_rarity_code: int | str, file_name: str):
-        self.skin_rarity_code = skin_rarity_code
-        self.file_name = file_name
-
-        super().__init__(f"Missing skin code for rarity code {skin_rarity_code!r} in file name {file_name!r}")
-
 class InvalidSkinRarityCodeError(ValueError):
     def __init__(self, skin_rarity_code: int | str, file_name: str):
         self.skin_rarity_code = skin_rarity_code
@@ -60,3 +46,21 @@ class ValkyrieNotFoundError(ValueError):
         self.battlesuit_code = battlesuit_code
 
         super().__init__(f"No Valkyrie found in part {part.no!r} with code {code!r} containing battlesuit code {battlesuit_code!r}")
+
+class MissingSkinRarityCodeError(AttributeError):
+    def __init__(self, skin_code: int | str, file_name: str):
+        self.skin_code = skin_code
+        self.file_name = file_name
+
+        super().__init__(f"Missing rarity code for skin code {skin_code!r} in file name {file_name!r}")
+
+class MissingSkinCodeError(AttributeError):
+    def __init__(self, skin_rarity_code: int | str, file_name: str):
+        self.skin_rarity_code = skin_rarity_code
+        self.file_name = file_name
+
+        super().__init__(f"Missing skin code for rarity code {skin_rarity_code!r} in file name {file_name!r}")
+
+class ReserveMissingPartNo(AttributeError):
+    def __init__(self, *args: object, name: str | None = None, obj: object = None) -> None:
+        super().__init__(*args, name=name, obj=obj)
