@@ -8,12 +8,12 @@ ChildT = TypeVar("ChildT", bound="ManyToOne")
 
 @dataclass(kw_only=True)
 class OneToMany(Generic[ChildT]):
-    _children: dict[int, ChildT] = field(init=False, default_factory=dict)
-    __children_attr: ClassVar[str]
+    _children: dict[int, ChildT] = field(init=False, default_factory=dict, hash=False, compare=False)
+    __children_attr: ClassVar[str] = field(init=False, hash=False, compare=False)
 
-    __children_numbers: set[int] = field(init=False, default_factory=set)
-    __mex_child_no: int = field(init=False, default=1)
-    __max_reserved_no: int = field(init=False, default=0)
+    __children_numbers: set[int] = field(init=False, default_factory=set, hash=False, compare=False)
+    __mex_child_no: int = field(init=False, default=1, hash=False, compare=False)
+    __max_reserved_no: int = field(init=False, default=0, hash=False, compare=False)
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)

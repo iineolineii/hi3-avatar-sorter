@@ -2,11 +2,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Self
 
-from .. import ALL_PARTS
 from ..errors import EmptyNoteError, InvalidAvatarIdError, InvalidBattlesuitIdError, InvalidExtraInfoError, InvalidPartIdError, InvalidSkinIdError, InvalidSkinRarityIdError, InvalidValkyrieIdError, MissingSkinIdError, MissingSkinRarityIdError, ReserveMissingBattlesuitNo, ReserveMissingPartNo, ReserveMissingSkinRarityNo, ReserveMissingValkyrieNo
-from ..valkyrie_db import ValkyrieDatabase
 
 if TYPE_CHECKING:
+    from ..valkyrie_db import ValkyrieDatabase
     from . import Battlesuit, Part, Skin, SkinRarity, Valkyrie
 
 @dataclass
@@ -198,13 +197,15 @@ class Avatar:
             "battlesuit_id":  battlesuit_id,
             "skin_rarity_id": skin_rarity_id,
             "skin_id":        skin_id,
-            "raw_note":         raw_note,
-            "format":           format
+            "raw_note":       raw_note,
+            "format":         format
         }
 
 
     @staticmethod
     def _parse_avatar_id(id: str, file_name: str, format: Literal["short", "long"]) -> tuple[Part, int, int]:
+        from .. import ALL_PARTS
+
         for part in ALL_PARTS:
             pattern = part.pattern_short if format == "short" else part.pattern_long
 

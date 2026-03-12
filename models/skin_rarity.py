@@ -12,11 +12,9 @@ if TYPE_CHECKING:
 
 @dataclass(kw_only=True)
 class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
-    id: int
-
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
-    skins: frozendict[int, "Skin"] = frozendict()
+    skins: "frozendict[int, Skin]" = field(default=frozendict(), hash=False, compare=False)
     """
     This field should not be updated from outside.
     Instead, use the `add_skin` method

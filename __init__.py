@@ -1,4 +1,4 @@
-from .models import Part
+from .models.part import Part
 from .valkyrie_db import ValkyrieDatabase
 
 PART1_VALKYRIES = [

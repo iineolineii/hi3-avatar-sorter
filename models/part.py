@@ -5,23 +5,24 @@ from typing import TYPE_CHECKING, Literal, Protocol
 
 from frozendict import frozendict
 
-if TYPE_CHECKING:
-    from ..relationships import OneToMany
-    from .valkyrie import Valkyrie
+from ..relationships import OneToMany
 
+
+if TYPE_CHECKING:
+    from .valkyrie import Valkyrie
 
 class HashableIterable[T](Hashable, Iterable[T], Protocol):
     pass
 
 
-@dataclass(kw_only=True)
+@dataclass(eq=True, kw_only=True, order=True, unsafe_hash=True)
 class Part(OneToMany["Valkyrie"]):
-    ids_short: HashableIterable[str]
-    ids_long:  HashableIterable[str]
+    ids_short: "HashableIterable[str]" = field(hash=True, compare=False)
+    ids_long:  "HashableIterable[str]" = field(hash=True, compare=False)
     no: int
 
-    pattern_short: re.Pattern = field(init=False)
-    pattern_long: re.Pattern = field(init=False)
+    pattern_short: re.Pattern = field(init=False, hash=True, compare=False)
+    pattern_long: re.Pattern = field(init=False, hash=True, compare=False)
 
     def __post_init__(self):
         object.__setattr__(self, "pattern_short", re.compile(
@@ -46,7 +47,7 @@ class Part(OneToMany["Valkyrie"]):
 
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
-    valkyries: frozendict[int, "Valkyrie"] = frozendict()
+    valkyries: "frozendict[int, Valkyrie]" = field(default=frozendict(), hash=False, compare=False)
     """
     This field should not be updated from outside.
     Instead, use the `add_valkyrie` method

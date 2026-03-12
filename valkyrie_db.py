@@ -1,10 +1,12 @@
 from collections import defaultdict
+from inspect import getsource
 from typing import TYPE_CHECKING
 
 from .errors import ValkyrieNotFoundError
+from .models.valkyrie import Valkyrie
 
 if TYPE_CHECKING:
-    from .models import Part, Valkyrie
+    from .models import Part
 
 
 class ValkyrieDatabase:

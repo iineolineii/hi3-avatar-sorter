@@ -69,6 +69,7 @@ renaming_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
 # print("Avatar(PART" + ", ".join(map(str, tuple(avatar))) + ")")
 # # print(black.format_str(pformat(vars(avatar, reserve=True), indent=4, reserve=True), mode=black.Mode()))
 
+# TODO: форматирование аватара в строку и в число
 # TODO: __main__
 # TODO: научиться парсить таблицу замен (детей аватара справа нужно инициализировать сразу с номерами, а потом вызывать Avatar.reserve())
 # TODO: проверить сдвиг по mex (безопасно ли убирать закомментированные строки в таблице замен?)
