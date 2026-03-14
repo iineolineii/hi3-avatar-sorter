@@ -4,18 +4,18 @@ from typing import TYPE_CHECKING, Generic, Self, TypeVar
 if TYPE_CHECKING:
     from .one_to_many import OneToMany
 
-ParentT = TypeVar("ParentT", bound="OneToMany")
 
+ParentT = TypeVar("ParentT", bound="OneToMany")
 
 @dataclass(kw_only=True)
 class ManyToOne(Generic[ParentT]):
-    id: int = field(hash=True)
-    no: int = field(default=None, hash=False, compare=False) # pyright: ignore[reportAssignmentType]
+    id: str = field(hash=True)
+    no: int = field(default=None, hash=False) # pyright: ignore[reportAssignmentType]
 
     @classmethod
     def by_id(
         cls,
-        child_id: int,
+        child_id: str,
         parent: ParentT,
         /
     ) -> Self:

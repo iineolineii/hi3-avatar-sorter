@@ -1,5 +1,9 @@
+from pathlib import Path
+from typing import Literal
+
 from . import PART1, PART2
 from .models import Avatar, Part
+from .utils import validate_paths
 
 
 KIANA = KALLEN = 1
@@ -19,10 +23,11 @@ RawAvatar = tuple[Part, int, int]
 AvatarTuple = RawAvatar | RawAvatarWithNote | RawAvatarWithSkin | RawAvatarWithSkinAndNote
 
 renaming_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
-    (PART1, RITA, 1, "Special"): (PART1, RITA, 3, "Special"),
-
     # 3rd Elysia battlesuit is not a new character
     (PART2, ELYSIA_P2, 1): (PART1, ELYSIA_P1, 3),
+
+    #
+    (PART1, RITA, 1, "Special"): (PART1, RITA, 3, "Special"),
 
     # Beach skins
     "601_04_01": (PART1, KIANA, 1, 4, 1),
@@ -62,3 +67,15 @@ renaming_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
     (PART1, KALLEN, 12): (PART1, KALLEN, 12+40),
     (PART1, KALLEN, 14): (PART1, KALLEN, 14+40)
 }
+
+
+def main(
+    source_folder: str | Path,
+    output_folder: str | Path = "output",
+    format: Literal["short", "long"] = "long"
+):
+    source_folder, output_folder = validate_paths(source_folder, output_folder)
+
+    for file in source_folder.iterdir():
+        # _, avatar_raw = Avatar._raw_from_file(file, format)
+        avatar_raw[""]

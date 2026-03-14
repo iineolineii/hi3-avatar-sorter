@@ -12,7 +12,7 @@ class Skin(ManyToOne["SkinRarity"]):
     @classmethod
     def by_id(
         cls,
-        id: int,
+        id: str,
         skin_rarity: "SkinRarity"
     ):
         return super().by_id(id, skin_rarity)

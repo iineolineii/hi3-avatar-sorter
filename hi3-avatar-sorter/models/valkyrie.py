@@ -18,7 +18,7 @@ class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
 
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
-    battlesuits: "frozendict[int, Battlesuit]" = field(default=frozendict(), hash=False, compare=False)
+    battlesuits: "frozendict[int, Battlesuit]" = field(default=frozendict(), hash=False)
     """
     This field should not be updated from outside.
     Instead, use the `add_battlesuit` method
@@ -27,8 +27,8 @@ class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     @classmethod
     def by_id( # pyright: ignore[reportIncompatibleMethodOverride]
         cls,
-        id: int,
-        battlesuit_id: int,
+        id: str,
+        battlesuit_id: str,
         part: "Part",
         valkyrie_db: "ValkyrieDatabase" = None # pyright: ignore[reportArgumentType]
     ):

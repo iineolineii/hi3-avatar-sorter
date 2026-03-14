@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 @dataclass(kw_only=True)
 class Battlesuit(OneToMany["SkinRarity"], ManyToOne["Valkyrie"]):
-    id: int
+    id: str
 
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
@@ -25,7 +25,7 @@ class Battlesuit(OneToMany["SkinRarity"], ManyToOne["Valkyrie"]):
     @classmethod
     def by_id(
         cls,
-        id: int,
+        id: str,
         valkyrie: "Valkyrie"
     ):
         return super().by_id(id, valkyrie)

@@ -4,16 +4,17 @@ from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 if TYPE_CHECKING:
     from .many_to_one import ManyToOne
 
+
 ChildT = TypeVar("ChildT", bound="ManyToOne")
 
 @dataclass(kw_only=True)
 class OneToMany(Generic[ChildT]):
-    _children: dict[int, ChildT] = field(init=False, default_factory=dict, hash=False, compare=False)
-    __children_attr: ClassVar[str] = field(init=False, hash=False, compare=False)
+    _children:   dict[str, ChildT] = field(init=False, default_factory=dict, hash=False)
+    __children_attr: ClassVar[str] = field(init=False, hash=False)
 
-    __children_numbers: set[int] = field(init=False, default_factory=set, hash=False, compare=False)
-    __mex_child_no: int = field(init=False, default=1, hash=False, compare=False)
-    __max_reserved_no: int = field(init=False, default=0, hash=False, compare=False)
+    __children_numbers: set[int] = field(init=False, default_factory=set, hash=False)
+    __mex_child_number:      int = field(init=False, default=1, hash=False)
+    __max_reserved_number:   int = field(init=False, default=0, hash=False)
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
@@ -37,18 +38,18 @@ class OneToMany(Generic[ChildT]):
                 self.__children_numbers.add(child.no)
                 self._update_mex(child.no)
 
-            self.__max_reserved_no = max(self.__children_numbers)
+            self.__max_reserved_number = max(self.__children_numbers)
 
     def _add_child(self, child: ChildT) -> ChildT:
         # Switch method to lazy if no spaces between child numbers are left
-        if len(self._children) >= self.__max_reserved_no:
+        if len(self._children) >= self.__max_reserved_number:
             self._add_child = self._add_child_lazy
             return self._add_child_lazy(child)
 
         return self._add_child_mex(child)
 
     def _add_child_mex(self, child: ChildT) -> ChildT:
-        child.no = getattr(child, "no", self.__mex_child_no)
+        child.no = getattr(child, "no", self.__mex_child_number)
         self.__children_numbers.add(child.no)
         self._update_mex(child.no)
         self._children[child.id] = child
@@ -60,6 +61,6 @@ class OneToMany(Generic[ChildT]):
         return child
 
     def _update_mex(self, child_no: int) -> None:
-        if child_no == self.__mex_child_no:
-            while self.__mex_child_no in self.__children_numbers:
-                self.__mex_child_no += 1
+        if child_no == self.__mex_child_number:
+            while self.__mex_child_number in self.__children_numbers:
+                self.__mex_child_number += 1

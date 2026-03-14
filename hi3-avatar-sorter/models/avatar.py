@@ -1,15 +1,189 @@
+from annotationlib import ForwardRef
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Self
+from typing import ClassVar, Self, TypedDict, get_args, get_origin
 
-from ..errors import EmptyNoteError, InvalidAvatarIdError, InvalidBattlesuitIdError, InvalidExtraInfoError, InvalidPartIdError, InvalidSkinIdError, InvalidSkinRarityIdError, InvalidValkyrieIdError, MissingSkinIdError, MissingSkinRarityIdError, ReserveMissingBattlesuitNo, ReserveMissingPartNo, ReserveMissingSkinRarityNo, ReserveMissingValkyrieNo
+from frozendict import frozendict
 
-if TYPE_CHECKING:
-    from ..valkyrie_db import ValkyrieDatabase
-    from . import Battlesuit, Part, Skin, SkinRarity, Valkyrie
 
-@dataclass
-class Avatar:
+def _evaluate_type_argument(cls: type, parent: type) -> type:
+    orig_bases = cls.__orig_bases__
+    if len(orig_bases) != 1:
+        raise TypeError
+
+    base = orig_bases[0]
+    if get_origin(base) is not parent:
+        raise TypeError
+
+    type_arg: type | ForwardRef = get_args(base)[0]
+    if isinstance(type_arg, type):
+        return type_arg
+    else:
+        return type_arg.evaluate(owner=cls)
+
+
+@dataclass(kw_only=True)
+class BaseModel:
+    id: str
+    no: int = field(default=None) # pyright: ignore[reportAssignmentType]
+
+    id_length: ClassVar[int]
+
+    @classmethod
+    def _validate_id(cls, id: str) -> None:
+        pass
+
+    def __int__(self) -> int:
+        return self.no
+
+    def __str__(self) -> str:
+        return f"№{int(self)}"
+
+
+class Container[Child: "BaseModel"](BaseModel):
+    _children_type: type["Child"]
+    _children: dict[str, "Child"]
+
+    def __init_subclass__(cls, evaluate_children_type: bool = True):
+        super().__init_subclass__()
+
+        if evaluate_children_type:
+            cls._children_type = _evaluate_type_argument(cls, Container)
+
+    def _add_child(self, child: "Child") -> None:
+        ...
+
+    def _reserve_child(self, child: "Child") -> None:
+        ...
+
+    def _get_or_create_child(self, child_id: str) -> "Child":
+        try:
+            return self._children[child_id]
+        except KeyError:
+            return self._children_type(id=child_id)
+
+
+class ClassContainer[Child: "BaseModel"](Container[Child], evaluate_children_type=False):
+    _children_type: ClassVar[type["Child"]] # pyright: ignore[reportIncompatibleVariableOverride, reportGeneralTypeIssues]
+    _children: ClassVar[dict[str, "Child"]] # pyright: ignore[reportIncompatibleVariableOverride, reportGeneralTypeIssues]
+
+    def __init_subclass__(cls, evaluate_children_type: bool = True):
+        super().__init_subclass__(evaluate_children_type=False)
+
+        if evaluate_children_type:
+            cls._children_type = _evaluate_type_argument(cls, Container) # pyright: ignore[reportIncompatibleVariableOverride]
+
+    @classmethod
+    def _add_child(cls, child: "Child") -> None: # pyright: ignore[reportIncompatibleMethodOverride]
+        ...
+
+    @classmethod
+    def _reserve_child(cls, child: "Child") -> None: # pyright: ignore[reportIncompatibleMethodOverride]
+        ...
+
+    @classmethod
+    def _get_or_create_child(cls, child_id: str) -> "Child": # pyright: ignore[reportIncompatibleMethodOverride]
+        try:
+            return cls._children[child_id]
+        except KeyError:
+            return cls._children_type(id=child_id)
+
+
+class Skin(BaseModel):
+    pass
+
+
+@dataclass(kw_only=True)
+class SkinRarity(Container[Skin]):
+    # We don't use default_factory here because this field
+    # will be replaced by _children in Container.__init_subclass__
+    skins: "frozendict[int, Skin]" = field(default=frozendict())
+    """
+    This field should not be updated from outside.
+    Instead, use the `add_skin` method
+    """
+
+    def add_skin(self, skin: "Skin") -> None:
+        return self._add_child(skin)
+
+    def reserve_skin(self, skin: "Skin") -> None:
+        return self._reserve_child(skin)
+
+    def get_or_create_skin(self, skin_id: str) -> "Skin":
+        return self._get_or_create_child(skin_id)
+
+@dataclass(kw_only=True)
+class Battlesuit(Container[SkinRarity]):
+    # We don't use default_factory here because this field
+    # will be replaced by _children in Container.__init_subclass__
+    skin_rarities: "frozendict[int, SkinRarity]" = field(default=frozendict())
+    """
+    This field should not be updated from outside.
+    Instead, use the `add_skin_rarity` method
+    """
+
+    def add_skin_rarity(self, skin_rarity: "SkinRarity") -> None:
+        return self._add_child(skin_rarity)
+
+    def reserve_skin_rarity(self, skin_rarity: "SkinRarity") -> None:
+        return self._reserve_child(skin_rarity)
+
+    def get_or_create_skin_rarity(self, skin_rarity_id: str) -> "SkinRarity":
+        return self._get_or_create_child(skin_rarity_id)
+
+@dataclass(kw_only=True)
+class Valkyrie(Container[Battlesuit]):
+    # We don't use default_factory here because this field
+    # will be replaced by _children in Container.__init_subclass__
+    battlesuits: "frozendict[int, Battlesuit]" = field(default=frozendict())
+    """
+    This field should not be updated from outside.
+    Instead, use the `add_battlesuit` method
+    """
+
+    def add_battlesuit(self, battlesuit: "Battlesuit") -> None:
+        return self._add_child(battlesuit)
+
+    def reserve_battlesuit(self, battlesuit: "Battlesuit") -> None:
+        return self._reserve_child(battlesuit)
+
+    def get_or_create_battlesuit(self, battlesuit_id: str) -> "Battlesuit":
+        return self._get_or_create_child(battlesuit_id)
+
+@dataclass(kw_only=True)
+class Part(Container[Valkyrie]):
+    # We don't use default_factory here because this field
+    # will be replaced by _children in Container.__init_subclass__
+    valkyries: "frozendict[int, Valkyrie]" = field(default=frozendict())
+    """
+    This field should not be updated from outside.
+    Instead, use the `add_valkyrie` method
+    """
+
+    def add_valkyrie(self, valkyrie: "Valkyrie") -> None:
+        return self._add_child(valkyrie)
+
+    def reserve_valkyrie(self, valkyrie: "Valkyrie") -> None:
+        return self._reserve_child(valkyrie)
+
+    def get_or_create_valkyrie(self, valkyrie_id: str) -> "Valkyrie":
+        return self._get_or_create_child(valkyrie_id)
+
+
+class RawAvatar(TypedDict):
+    part_id:        str
+    valkyrie_id:    str
+    battlesuit_id:  str
+    skin_rarity_id: str | None
+    skin_id:        str | None
+    note:           str | None
+
+
+@dataclass(kw_only=True)
+class Avatar(ClassContainer[Part]):
+    id: str = field(init=False)
+
     part:        "Part"
     valkyrie:    "Valkyrie"
     battlesuit:  "Battlesuit"
@@ -17,17 +191,19 @@ class Avatar:
     skin:        "Skin       | None" = None
     note:        "str        | None" = None
 
-    format: Literal["short", "long"] = "long"
-    valkyrie_db: "ValkyrieDatabase" = field(default=None) # pyright: ignore[reportAssignmentType]
-
-    file_name: str = field(init=False)
 
     def reserve(self):
-        self._check_children_no()
-        self.register()
+        # self.reserve_part(self.part)
+        # self.part.reserve_valkyrie(self.valkyrie)
+        self.valkyrie.reserve_battlesuit(self.battlesuit)
+
+        if self.skin_rarity is not None and self.skin is not None:
+            self.battlesuit.reserve_skin_rarity(self.skin_rarity)
+            self.skin_rarity.reserve_skin(self.skin)
 
     def register(self):
-        self.part.add_valkyrie(self.valkyrie)
+        # self.add_part(self.part)
+        # self.part.add_valkyrie(self.valkyrie)
         self.valkyrie.add_battlesuit(self.battlesuit)
 
         if self.skin_rarity is not None and self.skin is not None:
@@ -38,11 +214,10 @@ class Avatar:
     @classmethod
     def from_file(
         cls,
-        file: str | Path,
-        format: Literal["short", "long"] = "long"
+        file: str | Path
     ) -> Self:
-        file_name, raw_avatar = cls._raw_from_file(file, format)
-        self = cls.from_raw(file_name, **raw_avatar)
+        raw_avatar = cls._raw_from_file(file)
+        self = cls.from_raw(**raw_avatar)
         self.register()
 
         return self
@@ -50,24 +225,29 @@ class Avatar:
     @classmethod
     def from_raw(
         cls,
-        file_name: str,
         part_id:        str,
-        valkyrie_id:    int,
-        battlesuit_id:  int,
-        skin_rarity_id: int | None = None,
-        skin_id:        int | None = None,
-        raw_note:         str | None = None,
-        *,
-        format: Literal["short", "long"] = "long"
-    ) -> Self:
-        part = cls._resolve_part(part_id, format, file_name)
-        valkyrie = cls._resolve_valkyrie(valkyrie_id, battlesuit_id, part, file_name)
-        battlesuit = cls._resolve_battlesuit(battlesuit_id, valkyrie, file_name)
-        skin_rarity, skin = cls._resolve_rarity_and_skin(skin_rarity_id, skin_id, battlesuit, file_name)
+        valkyrie_id:    str,
+        battlesuit_id:  str,
+        skin_rarity_id: str | None,
+        skin_id:        str | None,
+        note:           str | None
+    ):
+        part = cls.get_or_create_part(part_id)
+        valkyrie = part.get_or_create_valkyrie(valkyrie_id)
+        battlesuit = valkyrie.get_or_create_battlesuit(battlesuit_id)
 
-        note = cls._format_note(raw_note, file_name)
+        if skin_rarity_id is not None and skin_id is not None:
+            skin_rarity = battlesuit.get_or_create_skin_rarity(skin_rarity_id)
+            skin = skin_rarity.get_or_create_skin(skin_id)
+        else:
+            skin_rarity = skin = None
 
-        self = cls(
+        if note is not None:
+            note = cls.format_note(note)
+        # else:
+        #     note = None
+
+        return cls(
             part=part,
             valkyrie=valkyrie,
             battlesuit=battlesuit,
@@ -75,177 +255,107 @@ class Avatar:
             skin=skin,
             note=note
         )
-        self.file_name = file_name
-        return self
+
 
     @classmethod
-    def _resolve_part(cls, part_id: str, format: Literal["short", "long"], file_name: str) -> "Part":
-        part = Part.by_id(part_id, format)
-
-        if part is None:
-            raise InvalidPartIdError(part_id, file_name)
-
-        return part
-
-    @classmethod
-    def _resolve_valkyrie(
+    def format_note(
         cls,
-        valkyrie_id: int,
-        battlesuit_id: int,
-        part: "Part",
-        file_name: str
-    ) -> "Valkyrie":
-        valkyrie = Valkyrie.by_id(valkyrie_id, battlesuit_id, part)
-
-        if valkyrie is None:
-            raise InvalidValkyrieIdError(valkyrie_id, file_name)
-
-        return valkyrie
-
-    @classmethod
-    def _resolve_battlesuit(
-        cls,
-        battlesuit_id: int,
-        valkyrie: "Valkyrie",
-        file_name: str
-    ) -> "Battlesuit":
-        battlesuit = Battlesuit.by_id(battlesuit_id, valkyrie)
-
-        if battlesuit is None:
-            raise InvalidBattlesuitIdError(battlesuit_id, file_name)
-
-        return battlesuit
-
-    @classmethod
-    def _resolve_rarity_and_skin(
-        cls,
-        skin_rarity_id: int | None,
-        skin_id: int | None,
-        battlesuit: "Battlesuit",
-        file_name: str
-    ) -> tuple[None, None] | tuple["SkinRarity", "Skin"]:
-        match (skin_rarity_id, skin_id):
-            case (None, None):
-                skin_rarity = skin = None
-
-            case (skin_rarity_id, None):
-                raise MissingSkinIdError(skin_rarity_id, file_name)
-
-            case (None, skin_id):
-                raise MissingSkinRarityIdError(skin_id, file_name)
-
-            case _:
-                skin_rarity = SkinRarity.by_id(skin_rarity_id, battlesuit)
-                if skin_rarity is None:
-                    raise InvalidSkinRarityIdError(skin_rarity_id, file_name)
-
-                skin = Skin.by_id(skin_id, skin_rarity)
-                if skin is None:
-                    raise InvalidSkinIdError(skin_id, file_name)
-
-        return (skin_rarity, skin) # pyright: ignore[reportReturnType]
-
-
-    @classmethod
-    def _format_note(
-        cls,
-        note: str | None,
-        file_name: str
+        note: str | None
     ) -> str:
         if not note:
-            raise EmptyNoteError(note, file_name)
+            raise EmptyNoteError(note)
 
         if note.lower() == "b":
             note = "Veliona"
 
         return note.capitalize()
 
-    def _check_children_no(self):
-        if self.part.no is None:
-            raise ReserveMissingPartNo(self)
-
-        if self.valkyrie.no is None:
-            raise ReserveMissingValkyrieNo(self)
-
-        if self.skin_rarity is not None and self.skin is not None:
-            if self.battlesuit.no is None:
-                raise ReserveMissingBattlesuitNo(self)
-
-            if self.skin_rarity.no is None:
-                raise ReserveMissingSkinRarityNo(self)
-
-
-    @staticmethod
-    def _parse_avatar_id(id: str, file_name: str, format: Literal["short", "long"]) -> tuple[Part, int, int]:
-        from .. import ALL_PARTS
-
-        for part in ALL_PARTS:
-            pattern = part.pattern_short if format == "short" else part.pattern_long
-
-            if match := pattern.match(id.rjust(5, "0")):
-                match_dict      = match.groupdict()
-                valkyrie_id   = int(match_dict["valkyrie_id"])
-                battlesuit_id = int(match_dict["battlesuit_id"])
-
-                return part, valkyrie_id, battlesuit_id
-
-        raise InvalidAvatarIdError(id, file_name)
 
     @classmethod
-    def _parse_extra_info(
-        cls,
-        info_parts: list[str],
-        file_name: str
-    ) -> (
-        tuple[str, str, str]
-        | tuple[str, str, None]
-        | tuple[None, None, str]
-        | tuple[None, None, None]
-    ):
-        skin_rarity_id: str | None
-        skin_id: str | None
-        note: str | None
+    def get_or_create_part(cls, part_id: str) -> "Part":
+        return cls._get_or_create_child(part_id)
 
-        match info_parts:
-            case [skin_rarity_id, skin_id, note]:
-                return skin_rarity_id, skin_id, note
+    # We don't use default_factory here because this field
+    # will be replaced by _children in Container.__init_subclass__
+    parts: "frozendict[int, Part]" = field(default=frozendict())
+    """
+    This field should not be updated from outside.
+    Instead, use the `add_part` method
+    """
+    @classmethod
+    def add_part(cls, part: "Part") -> None:
+        return cls._add_child(part)
 
-            case [skin_rarity_id, skin_id]:
-                return skin_rarity_id, skin_id, None
-
-            case [note]:
-                return None, None, note
-
-            case []:
-                return None, None, None
-
-            case _:
-                raise InvalidExtraInfoError(info_parts, file_name)
 
     @classmethod
     def _raw_from_file(
         cls,
-        file: str | Path,
-        format: Literal["short", "long"] = "long"
-    ) -> tuple[str, dict[str, Any]]:
+        file: str | Path
+    ) -> RawAvatar:
         file_name = Path(file).name
-        id, *extra_info_parts = file_name.split("_", maxsplit=3)
 
-        part_id, valkyrie_id, battlesuit_id = cls._parse_avatar_id(id, file_name, format)
-        skin_rarity_id, skin_id, raw_note = cls._parse_extra_info(extra_info_parts, file_name)
+        if not file_name:
+            raise EmptyFileNameError(file_name)
 
-        return file_name, {
+        name_parts = file_name.split("_", maxsplit=3)
+
+        skin_rarity_id: str | None = None
+        skin_id:        str | None = None
+        note:           str | None = None
+
+        match name_parts:
+            # Length is 0: Invalid file name (empty string or "_")
+            case []:
+                raise MissingAvatarIdError(file_name)
+
+            # Length is 1: Only avatar ID
+            case [avatar_id]:
+                pass
+
+            # Length is 2: Avatar ID with a note
+            case [avatar_id, note]:
+                pass
+
+            # Length is 3: Avatar ID with a skin
+            case [avatar_id, skin_rarity_id, skin_id]:
+                pass
+
+            # Length is 4: Avatar ID with a skin and a note
+            case [avatar_id, skin_rarity_id, skin_id, note]:
+                pass
+
+            # Length is 5: Unreachable because max length here is 4 (maxsplit+1)
+            case _:
+                raise AssertionError("This code should be unreachable")
+
+        avatar_id = avatar_id.rjust(cls.id_length, "0")
+
+        # The same as len(avatar_id) != cls.id_length:
+        if len(avatar_id) >= cls.id_length:
+            raise AvatarIdTooLongError(avatar_id, file_name)
+
+        # part_id, valkyrie_id, and battlesuit_id appear next to each other in avatar_id
+        pos = 0
+
+        part_id = avatar_id[pos:pos + Part.id_length]
+        pos += Part.id_length
+
+        valkyrie_id = avatar_id[pos:pos + Valkyrie.id_length]
+        pos += Valkyrie.id_length
+
+        battlesuit_id = avatar_id[pos:pos + Battlesuit.id_length]
+
+        return {
             "part_id":        part_id,
             "valkyrie_id":    valkyrie_id,
             "battlesuit_id":  battlesuit_id,
             "skin_rarity_id": skin_rarity_id,
             "skin_id":        skin_id,
-            "raw_note":       raw_note,
-            "format":         format
+            "note":           note
         }
 
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int | str]:
         result = (self.part.no, self.valkyrie.id, self.battlesuit.id)
 
         if self.skin_rarity is not None and self.skin is not None:
@@ -256,7 +366,7 @@ class Avatar:
 
         return iter(result)
 
-    def __int__(self):
+    def __int__(self) -> int:
         # Example: 010203_04_05_Special
         result = f"{int(self.part):02}{int(self.valkyrie):02}{self.battlesuit:02}"
 
@@ -266,7 +376,7 @@ class Avatar:
         if self.note:
             result += f", {self.note}"
 
-        return result
+        return int(result)
 
     def __str__(self) -> str:
         # Example: Raiden Mei №3, Skin 4★ №5, Special

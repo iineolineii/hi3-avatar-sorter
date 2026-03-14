@@ -11,24 +11,24 @@ if TYPE_CHECKING:
 class ValkyrieDatabase:
     def __init__(
         self,
-        part1_valkyries: list[tuple[int, str] | tuple[int, str, int]],
-        part2_valkyries: list[tuple[int, str] | tuple[int, str, int]],
+        part1_valkyries: list[tuple[str, str] | tuple[str, str, int]],
+        part2_valkyries: list[tuple[str, str] | tuple[str, str, int]],
         default_max: int = 100,
     ) -> None:
         from . import PART1, PART2
 
         self._all_valkyries: list["Valkyrie"] = []
-        self._valkyrie_db: dict[tuple[int, "Part"], list["Valkyrie"]] = defaultdict(list)
+        self._valkyrie_db: dict[tuple[str, "Part"], list["Valkyrie"]] = defaultdict(list)
 
         # Store range start for each ID
-        range_starts: dict[tuple[int, "Part"], int] = {}
+        range_starts: dict[tuple[str, "Part"], int] = {}
 
         # Merge raw data preserving the order
         valkyries = [(part1_valkyries, PART1), (part2_valkyries, PART2)]
 
         for raw_valkyries, part in valkyries:
             for raw in raw_valkyries:
-                id:   int = raw[0]
+                id:   str = raw[0]
                 name: str = raw[1]
 
                 # Current start is the previous end
@@ -50,7 +50,7 @@ class ValkyrieDatabase:
                 # Current end is the next start
                 range_starts[(id, part)] = end
 
-    def get(self, id: int, battlesuit_id: int, part: "Part") -> "Valkyrie":
+    def get(self, id: str, battlesuit_id: str, part: "Part") -> "Valkyrie":
         candidates = self._valkyrie_db.get((id, part), [])
 
         for valkyrie in candidates:

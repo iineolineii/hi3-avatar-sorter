@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
-    skins: "frozendict[int, Skin]" = field(default=frozendict(), hash=False, compare=False)
+    skins: "frozendict[int, Skin]" = field(default=frozendict(), hash=False)
     """
     This field should not be updated from outside.
     Instead, use the `add_skin` method
@@ -23,7 +23,7 @@ class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
     @classmethod
     def by_id(
         cls,
-        id: int,
+        id: str,
         battlesuit: "Battlesuit"
     ):
         return super().by_id(id, battlesuit)
