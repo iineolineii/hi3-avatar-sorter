@@ -1,5 +1,4 @@
 from collections import defaultdict
-from inspect import getsource
 from typing import TYPE_CHECKING
 
 from .errors import ValkyrieNotFoundError
@@ -29,7 +28,7 @@ class ValkyrieDatabase:
 
         for raw_valkyries, part in valkyries:
             for raw in raw_valkyries:
-                id: int = raw[0]
+                id:   int = raw[0]
                 name: str = raw[1]
 
                 # Current start is the previous end

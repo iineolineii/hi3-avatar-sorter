@@ -11,7 +11,6 @@ RITA = 7
 ELYSIA_P2 = 10
 ELYSIA_P1 = 22
 
-
 RawAvatarWithNote = tuple[Part, int, int, str]
 RawAvatarWithSkinAndNote = tuple[Part, int, int, int, int, str]
 RawAvatarWithSkin = tuple[Part, int, int, int, int]
@@ -65,11 +64,6 @@ renaming_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
 }
 
 
-# avatar = Avatar.from_file("60106")
-# print("Avatar(PART" + ", ".join(map(str, tuple(avatar))) + ")")
-# # print(black.format_str(pformat(vars(avatar, reserve=True), indent=4, reserve=True), mode=black.Mode()))
-
-# TODO: форматирование аватара в строку и в число
 # TODO: __main__
 # TODO: научиться парсить таблицу замен (детей аватара справа нужно инициализировать сразу с номерами, а потом вызывать Avatar.reserve())
 # TODO: проверить сдвиг по mex (безопасно ли убирать закомментированные строки в таблице замен?)

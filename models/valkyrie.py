@@ -6,8 +6,8 @@ from frozendict import frozendict
 from ..relationships import ManyToOne, OneToMany
 
 if TYPE_CHECKING:
-    from ..valkyrie_db import ValkyrieDatabase
     from . import Battlesuit, Part
+    from ..valkyrie_db import ValkyrieDatabase
 
 
 @dataclass(kw_only=True)
@@ -39,3 +39,6 @@ class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
 
     def add_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
         return self._add_child(battlesuit)
+
+    def __str__(self) -> str:
+        return self.name

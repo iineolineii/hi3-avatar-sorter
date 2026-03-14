@@ -30,11 +30,10 @@ class Avatar:
         self.part.add_valkyrie(self.valkyrie)
         self.valkyrie.add_battlesuit(self.battlesuit)
 
-        if self.skin_rarity is None or self.skin is None:
-            return
+        if self.skin_rarity is not None and self.skin is not None:
+            self.battlesuit.add_skin_rarity(self.skin_rarity)
+            self.skin_rarity.add_skin(self.skin)
 
-        self.battlesuit.add_skin_rarity(self.skin_rarity)
-        self.skin_rarity.add_skin(self.skin)
 
     @classmethod
     def from_file(
@@ -78,24 +77,6 @@ class Avatar:
         )
         self.file_name = file_name
         return self
-
-
-    def _check_children_no(self):
-        if self.part.no is None:
-            raise ReserveMissingPartNo(self)
-
-        if self.valkyrie.no is None:
-            raise ReserveMissingValkyrieNo(self)
-
-        if self.skin_rarity is None or self.skin is None:
-            return
-
-        if self.battlesuit.no is None:
-            raise ReserveMissingBattlesuitNo(self)
-
-        if self.skin_rarity.no is None:
-            raise ReserveMissingSkinRarityNo(self)
-
 
     @classmethod
     def _resolve_part(cls, part_id: str, format: Literal["short", "long"], file_name: str) -> "Part":
@@ -164,6 +145,7 @@ class Avatar:
 
         return (skin_rarity, skin) # pyright: ignore[reportReturnType]
 
+
     @classmethod
     def _format_note(
         cls,
@@ -176,30 +158,21 @@ class Avatar:
         if note.lower() == "b":
             note = "Veliona"
 
-        return note
+        return note.capitalize()
 
+    def _check_children_no(self):
+        if self.part.no is None:
+            raise ReserveMissingPartNo(self)
 
-    @classmethod
-    def _raw_from_file(
-        cls,
-        file: str | Path,
-        format: Literal["short", "long"] = "long"
-    ) -> tuple[str, dict[str, Any]]:
-        file_name = Path(file).name
-        id, *extra_info_parts = file_name.split("_", maxsplit=3)
+        if self.valkyrie.no is None:
+            raise ReserveMissingValkyrieNo(self)
 
-        part_id, valkyrie_id, battlesuit_id = cls._parse_avatar_id(id, file_name, format)
-        skin_rarity_id, skin_id, raw_note = cls._parse_extra_info(extra_info_parts, file_name)
+        if self.skin_rarity is not None and self.skin is not None:
+            if self.battlesuit.no is None:
+                raise ReserveMissingBattlesuitNo(self)
 
-        return file_name, {
-            "part_id":        part_id,
-            "valkyrie_id":    valkyrie_id,
-            "battlesuit_id":  battlesuit_id,
-            "skin_rarity_id": skin_rarity_id,
-            "skin_id":        skin_id,
-            "raw_note":       raw_note,
-            "format":         format
-        }
+            if self.skin_rarity.no is None:
+                raise ReserveMissingSkinRarityNo(self)
 
 
     @staticmethod
@@ -249,6 +222,28 @@ class Avatar:
             case _:
                 raise InvalidExtraInfoError(info_parts, file_name)
 
+    @classmethod
+    def _raw_from_file(
+        cls,
+        file: str | Path,
+        format: Literal["short", "long"] = "long"
+    ) -> tuple[str, dict[str, Any]]:
+        file_name = Path(file).name
+        id, *extra_info_parts = file_name.split("_", maxsplit=3)
+
+        part_id, valkyrie_id, battlesuit_id = cls._parse_avatar_id(id, file_name, format)
+        skin_rarity_id, skin_id, raw_note = cls._parse_extra_info(extra_info_parts, file_name)
+
+        return file_name, {
+            "part_id":        part_id,
+            "valkyrie_id":    valkyrie_id,
+            "battlesuit_id":  battlesuit_id,
+            "skin_rarity_id": skin_rarity_id,
+            "skin_id":        skin_id,
+            "raw_note":       raw_note,
+            "format":         format
+        }
+
 
     def __iter__(self):
         result = (self.part.no, self.valkyrie.id, self.battlesuit.id)
@@ -260,3 +255,27 @@ class Avatar:
             result += (self.note,)
 
         return iter(result)
+
+    def __int__(self):
+        # Example: 010203_04_05_Special
+        result = f"{int(self.part):02}{int(self.valkyrie):02}{self.battlesuit:02}"
+
+        if self.skin_rarity is not None and self.skin is not None:
+            result += f", {self.skin_rarity} {self.skin}"
+
+        if self.note:
+            result += f", {self.note}"
+
+        return result
+
+    def __str__(self) -> str:
+        # Example: Raiden Mei №3, Skin 4★ №5, Special
+        result = f"{self.valkyrie} {self.battlesuit}"
+
+        if self.skin_rarity is not None and self.skin is not None:
+            result += f", {self.skin_rarity} {self.skin}"
+
+        if self.note:
+            result += f", {self.note}"
+
+        return result

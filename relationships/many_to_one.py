@@ -23,3 +23,9 @@ class ManyToOne(Generic[ParentT]):
             return parent._children[child_id] # pyright: ignore[reportReturnType]
 
         return cls(id=child_id)
+
+    def __int__(self) -> int:
+        return self.no
+
+    def __str__(self) -> str:
+        return f"№{int(self)}"

@@ -30,3 +30,9 @@ class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
 
     def add_skin(self, skin: "Skin") -> "Skin":
         return self._add_child(skin)
+
+    def __int__(self) -> int:
+        return self.id
+
+    def __str__(self) -> str:
+        return f"{int(self)}★"

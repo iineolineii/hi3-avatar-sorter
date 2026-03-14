@@ -70,3 +70,9 @@ class Part(OneToMany["Valkyrie"]):
 
     def add_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
         return self._add_child(valkyrie)
+
+    def __int__(self) -> int:
+        return self.no
+
+    def __str__(self) -> str:
+        return f"№{int(self)}"

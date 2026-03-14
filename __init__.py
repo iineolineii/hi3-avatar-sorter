@@ -47,8 +47,8 @@ PART2_VALKYRIES: list[tuple[int, str] | tuple[int, str, int]] = [
     (9, "Sparkle"                 )
 ]
 
-PART_id_LENGTH = 1
-VALID_SKIN_RARITY_idS = (2, 3, 4, 5)
+PART_ID_LENGTH = 1
+VALID_SKIN_RARITY_IDS = (2, 3, 4, 5)
 
 PART1 = Part(ids_short="0", ids_long="6", no=1)
 PART2 = Part(ids_short=("2", "62"), ids_long=("202", "302"), no=2)
