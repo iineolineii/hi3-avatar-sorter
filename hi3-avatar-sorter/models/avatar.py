@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar, Self, TypedDict, get_args, get_origin
 
+from ..errors import EmptyFileNameError, EmptyNoteError, MissingAvatarIdError
+
 from frozendict import frozendict
 
 
