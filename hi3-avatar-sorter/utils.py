@@ -1,6 +1,7 @@
+from annotationlib import ForwardRef
 from collections.abc import Hashable, Iterable
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, get_args, get_origin
 
 from . import PART1_VALKYRIES, PART2_VALKYRIES
 from .models import Part, Valkyrie
@@ -45,6 +46,22 @@ def validate_paths(source_folder: str | Path, output_folder: str | Path = "outpu
     return source_folder, output_folder
 
 
+def evaluate_type_argument(cls: type, parent: type) -> type:
+    orig_bases = cls.__orig_bases__
+    if len(orig_bases) != 1:
+        raise TypeError # TODO: Add custom exception class
+
+    base = orig_bases[0]
+    if get_origin(base) is not parent:
+        raise TypeError # TODO: Add custom exception class
+
+    type_arg: type | ForwardRef = get_args(base)[0]
+    if isinstance(type_arg, type):
+        return type_arg
+    else:
+        return type_arg.evaluate(owner=cls)
+
+
 def build_valkyrie_db():
     # Store range start for each ID
     range_starts: dict[tuple[str, "Part"], int] = {}
@@ -85,5 +102,6 @@ def build_valkyrie_db():
 __all__ = [
     "validate_paths",
     "build_valkyrie_db",
+    "evaluate_type_argument",
     "HashableIterable"
 ]

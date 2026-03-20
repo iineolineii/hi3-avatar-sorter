@@ -1,8 +1,7 @@
-from annotationlib import ForwardRef
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ClassVar, Self, TypedDict, get_args, get_origin
+from typing import Self, TypedDict
 
 from ..errors import EmptyFileNameError, EmptyNoteError, MissingAvatarIdError
 
@@ -12,23 +11,6 @@ from .part import Part
 from .skin import Skin
 from .skin_rarity import SkinRarity
 from .valkyrie import Valkyrie
-
-
-
-def _evaluate_type_argument(cls: type, parent: type) -> type:
-    orig_bases = cls.__orig_bases__
-    if len(orig_bases) != 1:
-        raise TypeError
-
-    base = orig_bases[0]
-    if get_origin(base) is not parent:
-        raise TypeError
-
-    type_arg: type | ForwardRef = get_args(base)[0]
-    if isinstance(type_arg, type):
-        return type_arg
-    else:
-        return type_arg.evaluate(owner=cls)
 
 
 class RawAvatar(TypedDict):
@@ -93,7 +75,7 @@ class Avatar(BaseModel):
         note:           str | None
     ):
         part = Part.by_id(part_id)
-        valkyrie = part.get_or_create_valkyrie(valkyrie_id)
+        valkyrie = part.get_valkyrie(valkyrie_id, battlesuit_id)
         battlesuit = valkyrie.get_or_create_battlesuit(battlesuit_id)
 
         if skin_rarity_id is not None and skin_id is not None:

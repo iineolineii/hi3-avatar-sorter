@@ -7,7 +7,7 @@ from warnings import deprecated
 from ..errors import EmptyReservationNoError, MissingChildrenAttributeError
 
 from .base import BaseModel, NonUniqueIdModel
-from .avatar import _evaluate_type_argument
+from ..utils import evaluate_type_argument
 
 
 @dataclass(kw_only=True)
@@ -35,7 +35,7 @@ class Container[Child: "BaseModel"](BaseModel):
             else:
                 raise MissingChildrenAttributeError(cls.__name__)
 
-            cls._children_type = _evaluate_type_argument(cls, Container)
+            cls._children_type = evaluate_type_argument(cls, Container)
 
     def _rename_children_attr(self):
         # Copy named frozendict children to the mutable defaultdict
@@ -82,7 +82,7 @@ class NonUniqueIdContainer[Child: "NonUniqueIdModel"](Container[Child], evaluate
         super().__init_subclass__(evaluate_children_type=False)
 
         if evaluate_children_type:
-            cls._children_type = _evaluate_type_argument(cls, NonUniqueIdContainer)
+            cls._children_type = evaluate_type_argument(cls, NonUniqueIdContainer)
 
     @deprecated(
         "Using _get_or_create_child is not available for non-unique ID containers. "
