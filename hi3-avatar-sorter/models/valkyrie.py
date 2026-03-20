@@ -1,23 +1,19 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from frozendict import frozendict
 
-from ..relationships import ManyToOne, OneToMany
-
-if TYPE_CHECKING:
-    from . import Battlesuit, Part
-    from ..valkyrie_db import ValkyrieDatabase
+from .base import NonUniqueIdModel
+from .battlesuit import Battlesuit
+from .container  import Container
 
 
 @dataclass(kw_only=True)
-class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
+class Valkyrie(NonUniqueIdModel, Container[Battlesuit]):
     name: str
-    battlesuit_id_range: range
 
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
-    battlesuits: "frozendict[int, Battlesuit]" = field(default=frozendict(), hash=False)
+    battlesuits: "frozendict[str, Battlesuit]" = field(default=frozendict())
     """
     This field should not be updated from outside.
     Instead, use the `add_battlesuit` method
@@ -26,5 +22,8 @@ class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     def add_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
         return self._add_child(battlesuit)
 
-    def __str__(self) -> str:
-        return self.name
+    def reserve_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
+        return self._reserve_child(battlesuit)
+
+    def get_or_create_battlesuit(self, battlesuit_id: str) -> "Battlesuit":
+        return self._get_or_create_child(battlesuit_id)

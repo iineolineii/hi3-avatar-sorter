@@ -6,7 +6,13 @@ from typing import ClassVar, Self, TypedDict, get_args, get_origin
 
 from ..errors import EmptyFileNameError, EmptyNoteError, MissingAvatarIdError
 
-from frozendict import frozendict
+from .base import BaseModel
+from .battlesuit import Battlesuit
+from .part import Part
+from .skin import Skin
+from .skin_rarity import SkinRarity
+from .valkyrie import Valkyrie
+
 
 
 def _evaluate_type_argument(cls: type, parent: type) -> type:
@@ -25,154 +31,6 @@ def _evaluate_type_argument(cls: type, parent: type) -> type:
         return type_arg.evaluate(owner=cls)
 
 
-@dataclass(kw_only=True)
-class BaseModel:
-    id: str
-    no: int = field(default=None) # pyright: ignore[reportAssignmentType]
-
-    id_length: ClassVar[int]
-
-    @classmethod
-    def _validate_id(cls, id: str) -> None:
-        pass
-
-    def __int__(self) -> int:
-        return self.no
-
-    def __str__(self) -> str:
-        return f"№{int(self)}"
-
-
-class Container[Child: "BaseModel"](BaseModel):
-    _children_type: type["Child"]
-    _children: dict[str, "Child"]
-
-    def __init_subclass__(cls, evaluate_children_type: bool = True):
-        super().__init_subclass__()
-
-        if evaluate_children_type:
-            cls._children_type = _evaluate_type_argument(cls, Container)
-
-    def _add_child(self, child: "Child") -> None:
-        ...
-
-    def _reserve_child(self, child: "Child") -> None:
-        ...
-
-    def _get_or_create_child(self, child_id: str) -> "Child":
-        try:
-            return self._children[child_id]
-        except KeyError:
-            return self._children_type(id=child_id)
-
-
-class ClassContainer[Child: "BaseModel"](Container[Child], evaluate_children_type=False):
-    _children_type: ClassVar[type["Child"]] # pyright: ignore[reportIncompatibleVariableOverride, reportGeneralTypeIssues]
-    _children: ClassVar[dict[str, "Child"]] # pyright: ignore[reportIncompatibleVariableOverride, reportGeneralTypeIssues]
-
-    def __init_subclass__(cls, evaluate_children_type: bool = True):
-        super().__init_subclass__(evaluate_children_type=False)
-
-        if evaluate_children_type:
-            cls._children_type = _evaluate_type_argument(cls, Container) # pyright: ignore[reportIncompatibleVariableOverride]
-
-    @classmethod
-    def _add_child(cls, child: "Child") -> None: # pyright: ignore[reportIncompatibleMethodOverride]
-        ...
-
-    @classmethod
-    def _reserve_child(cls, child: "Child") -> None: # pyright: ignore[reportIncompatibleMethodOverride]
-        ...
-
-    @classmethod
-    def _get_or_create_child(cls, child_id: str) -> "Child": # pyright: ignore[reportIncompatibleMethodOverride]
-        try:
-            return cls._children[child_id]
-        except KeyError:
-            return cls._children_type(id=child_id)
-
-
-class Skin(BaseModel):
-    pass
-
-
-@dataclass(kw_only=True)
-class SkinRarity(Container[Skin]):
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__init_subclass__
-    skins: "frozendict[int, Skin]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_skin` method
-    """
-
-    def add_skin(self, skin: "Skin") -> None:
-        return self._add_child(skin)
-
-    def reserve_skin(self, skin: "Skin") -> None:
-        return self._reserve_child(skin)
-
-    def get_or_create_skin(self, skin_id: str) -> "Skin":
-        return self._get_or_create_child(skin_id)
-
-@dataclass(kw_only=True)
-class Battlesuit(Container[SkinRarity]):
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__init_subclass__
-    skin_rarities: "frozendict[int, SkinRarity]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_skin_rarity` method
-    """
-
-    def add_skin_rarity(self, skin_rarity: "SkinRarity") -> None:
-        return self._add_child(skin_rarity)
-
-    def reserve_skin_rarity(self, skin_rarity: "SkinRarity") -> None:
-        return self._reserve_child(skin_rarity)
-
-    def get_or_create_skin_rarity(self, skin_rarity_id: str) -> "SkinRarity":
-        return self._get_or_create_child(skin_rarity_id)
-
-@dataclass(kw_only=True)
-class Valkyrie(Container[Battlesuit]):
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__init_subclass__
-    battlesuits: "frozendict[int, Battlesuit]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_battlesuit` method
-    """
-
-    def add_battlesuit(self, battlesuit: "Battlesuit") -> None:
-        return self._add_child(battlesuit)
-
-    def reserve_battlesuit(self, battlesuit: "Battlesuit") -> None:
-        return self._reserve_child(battlesuit)
-
-    def get_or_create_battlesuit(self, battlesuit_id: str) -> "Battlesuit":
-        return self._get_or_create_child(battlesuit_id)
-
-@dataclass(kw_only=True)
-class Part(Container[Valkyrie]):
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__init_subclass__
-    valkyries: "frozendict[int, Valkyrie]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_valkyrie` method
-    """
-
-    def add_valkyrie(self, valkyrie: "Valkyrie") -> None:
-        return self._add_child(valkyrie)
-
-    def reserve_valkyrie(self, valkyrie: "Valkyrie") -> None:
-        return self._reserve_child(valkyrie)
-
-    def get_or_create_valkyrie(self, valkyrie_id: str) -> "Valkyrie":
-        return self._get_or_create_child(valkyrie_id)
-
-
 class RawAvatar(TypedDict):
     part_id:        str
     valkyrie_id:    str
@@ -183,7 +41,7 @@ class RawAvatar(TypedDict):
 
 
 @dataclass(kw_only=True)
-class Avatar(ClassContainer[Part]):
+class Avatar(BaseModel):
     id: str = field(init=False)
 
     part:        "Part"
@@ -234,7 +92,7 @@ class Avatar(ClassContainer[Part]):
         skin_id:        str | None,
         note:           str | None
     ):
-        part = cls.get_or_create_part(part_id)
+        part = Part.by_id(part_id)
         valkyrie = part.get_or_create_valkyrie(valkyrie_id)
         battlesuit = valkyrie.get_or_create_battlesuit(battlesuit_id)
 
@@ -271,22 +129,6 @@ class Avatar(ClassContainer[Part]):
             note = "Veliona"
 
         return note.capitalize()
-
-
-    @classmethod
-    def get_or_create_part(cls, part_id: str) -> "Part":
-        return cls._get_or_create_child(part_id)
-
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__init_subclass__
-    parts: "frozendict[int, Part]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_part` method
-    """
-    @classmethod
-    def add_part(cls, part: "Part") -> None:
-        return cls._add_child(part)
 
 
     @classmethod
@@ -330,11 +172,7 @@ class Avatar(ClassContainer[Part]):
             case _:
                 raise AssertionError("This code should be unreachable")
 
-        avatar_id = avatar_id.rjust(cls.id_length, "0")
-
-        # The same as len(avatar_id) != cls.id_length:
-        if len(avatar_id) >= cls.id_length:
-            raise AvatarIdTooLongError(avatar_id, file_name)
+        avatar_id = cls._validate_id(avatar_id)
 
         # part_id, valkyrie_id, and battlesuit_id appear next to each other in avatar_id
         pos = 0

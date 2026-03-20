@@ -1,20 +1,17 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Self
+from typing import Self
 
 from frozendict import frozendict
 
+from .container import NonUniqueIdContainer
+from .valkyrie import Valkyrie
 from ..errors import UnknownPartIdError, UnknownValkyrieIdError
-from ..relationships import OneToMany
-
-if TYPE_CHECKING:
-    from .valkyrie import Valkyrie
-    from ..utils import HashableIterable
+from ..utils import HashableIterable
 
 
-@dataclass(eq=True, kw_only=True, order=True, unsafe_hash=True)
-class Part(OneToMany["Valkyrie"]):
-    ids: "HashableIterable[str]" = field(hash=True)
-    no: int
+@dataclass(kw_only=True)
+class Part(NonUniqueIdContainer[Valkyrie]):
+    ids: "HashableIterable[str]"
 
     id: str = field(init=False)
     id_length = 3
@@ -35,8 +32,6 @@ class Part(OneToMany["Valkyrie"]):
 
     @classmethod
     def by_id(cls, id: str) -> Self:
-        cls._validate_id(id)
-
         for part in ALL_PARTS:
             if id in part.ids:
                 return part # pyright: ignore[reportReturnType]
