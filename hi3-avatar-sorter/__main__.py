@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Literal
 
-from . import PART1, PART2
 from .models import Avatar, Part
+from .models.part import PART1, PART2
 from .utils import validate_paths
 
 

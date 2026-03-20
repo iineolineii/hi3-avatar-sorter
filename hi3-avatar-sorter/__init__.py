@@ -1,7 +1,3 @@
-from .models.part import Part
-from .valkyrie_db import ValkyrieDatabase
-
-
 PART1_VALKYRIES = [
     ("01", "Kiana Kaslana",      50 ), # Changed from 10 because of NOTE#1
     ("01", "Kallen Kaslana",        ),
@@ -48,6 +44,4 @@ PART2_VALKYRIES: list[tuple[str, str] | tuple[str, str, int]] = [
     ("09", "Sparkle"                )
 ]
 
-VALID_SKIN_RARITY_IDS = (2, 3, 4, 5)
-
-VALKYRIE_DB = ValkyrieDatabase(PART1_VALKYRIES, PART2_VALKYRIES)
+__all__ = ["PART1_VALKYRIES", "PART2_VALKYRIES"]

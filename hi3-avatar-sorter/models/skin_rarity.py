@@ -36,3 +36,5 @@ class SkinRarity(OneToMany["Skin"], ManyToOne["Battlesuit"]):
 
     def __str__(self) -> str:
         return f"{int(self)}★"
+
+VALID_IDS = ("2", "3", "4", "5")
