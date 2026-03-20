@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Self
 
 from frozendict import frozendict
 
-from ..errors import UnknownPartIdError
+from ..errors import UnknownPartIdError, UnknownValkyrieIdError
 from ..relationships import OneToMany
 
 if TYPE_CHECKING:
@@ -16,13 +16,22 @@ class Part(OneToMany["Valkyrie"]):
     ids: "HashableIterable[str]" = field(hash=True)
     no: int
 
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__post_init__
-    valkyries: "frozendict[int, Valkyrie]" = field(default=frozendict(), hash=False)
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_valkyrie` method
-    """
+    id: str = field(init=False)
+    id_length = 3
+
+    def add_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
+        return self._add_child(valkyrie)
+
+    def reserve_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
+        return self._reserve_child(valkyrie)
+
+    def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> "Valkyrie":
+        valkyrie = self._get_child(valkyrie_id, battlesuit_id)
+
+        if valkyrie is None:
+            raise UnknownValkyrieIdError(valkyrie_id, battlesuit_id)
+
+        return valkyrie
 
     @classmethod
     def by_id(cls, id: str) -> Self:
@@ -34,18 +43,13 @@ class Part(OneToMany["Valkyrie"]):
 
         raise UnknownPartIdError(id)
 
-    @classmethod
-    def _validate_id(cls, id: str) -> None:
-        pass
-
-    def __int__(self) -> int:
-        return self.no
-
-    def __str__(self) -> str:
-        return f"№{int(self)}"
-
-    def add_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
-        return self._add_child(valkyrie)
+    # We don't use default_factory here because this field
+    # will be replaced by _children in Container.__post_init__
+    valkyries: "frozendict[str, list[Valkyrie]]" = field(default=frozendict())
+    """
+    This field should not be updated from outside.
+    Instead, use the `add_valkyrie` method
+    """
 
 
 PART1 = Part(no=1, ids=("000", "006"))

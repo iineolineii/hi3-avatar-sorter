@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 @dataclass(kw_only=True)
 class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     name: str
-    part: "Part"
     battlesuit_id_range: range
 
     # We don't use default_factory here because this field
@@ -23,19 +22,6 @@ class Valkyrie(OneToMany["Battlesuit"], ManyToOne["Part"]):
     This field should not be updated from outside.
     Instead, use the `add_battlesuit` method
     """
-
-    @classmethod
-    def by_id( # pyright: ignore[reportIncompatibleMethodOverride]
-        cls,
-        id: str,
-        battlesuit_id: str,
-        part: "Part",
-        valkyrie_db: "ValkyrieDatabase" = None # pyright: ignore[reportArgumentType]
-    ):
-        if valkyrie_db is None:
-            from .. import VALKYRIE_DB as valkyrie_db
-
-        valkyrie_db.get(id, battlesuit_id, part)
 
     def add_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
         return self._add_child(battlesuit)
