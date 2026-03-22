@@ -1,13 +1,15 @@
 from collections import defaultdict
 from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 from warnings import deprecated
 
+from .base import BaseModel
 from ..errors import EmptyReservationNoError, MissingChildrenAttributeError
-
-from .base import BaseModel, NonUniqueIdModel
 from ..utils import evaluate_type_argument
+
+if TYPE_CHECKING:
+    from .base import NonUniqueIdModel
 
 
 @dataclass(kw_only=True)
@@ -20,7 +22,7 @@ class Container[Child: "BaseModel"](BaseModel):
     __children_attr:    ClassVar[str]
 
     def __post_init__(self):
-        super().__post_init__() # pyright: ignore[reportAttributeAccessIssue]
+        super().__post_init__()
         self._rename_children_attr()
 
     def __init_subclass__(cls, evaluate_children_type: bool = True):

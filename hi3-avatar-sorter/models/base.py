@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from ..errors import TooShortIdError
+from ..errors import TooLongIdError
 
 
 @dataclass(kw_only=True)
@@ -11,12 +11,21 @@ class BaseModel:
     no: int = field(default=None) # pyright: ignore[reportAssignmentType]
     id_length: ClassVar[int] = 2
 
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+
+        if getattr(cls, "__hash__", None) is None:
+            cls.__hash__ = BaseModel.__hash__
+
+    def __post_init__(self):
+        self._validate_id(self.id)
+
     @classmethod
     def _validate_id(cls, id: str) -> str:
         id = id.rjust(cls.id_length, "0")
 
-        if len(id) < cls.id_length:
-            raise TooShortIdError(id, cls.id_length, cls.__name__)
+        if len(id) > cls.id_length:
+            raise TooLongIdError(id, cls.id_length, cls.__name__)
 
         return id
 
@@ -25,6 +34,9 @@ class BaseModel:
 
     def __str__(self) -> str:
         return f"№{int(self)}"
+
+    def __hash__(self) -> int:
+        return hash((self.id, self.no))
 
 
 @dataclass(kw_only=True)

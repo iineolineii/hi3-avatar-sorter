@@ -77,13 +77,13 @@ class UnknownSkinRarityIdError(ParsingError):
         super().__init__(f"Unknown skin rarity ID {id!r}")
 
 
-class TooShortIdError(ParsingError):
+class TooLongIdError(ParsingError):
     def __init__(self, id: str, id_length: int, class_name: str) -> None:
         self.id = id
         self.id_length = id_length
         self.class_name = class_name
 
-        super().__init__(f"ID {id!r} length {id_length!r} is too short for {class_name!r}")
+        super().__init__(f"ID {id!r} length {id_length!r} is too long for {class_name!r}")
 
 
 class EmptyNoteError(ParsingError):
@@ -121,7 +121,7 @@ __all__ = [
     "UnknownPartIdError",
     "UnknownValkyrieIdError",
     "UnknownSkinRarityIdError",
-    "TooShortIdError",
+    "TooLongIdError",
     "EmptyNoteError",
     "EmptyReservationNoError",
     "MissingChildrenAttributeError",

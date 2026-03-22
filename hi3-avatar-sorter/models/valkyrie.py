@@ -4,7 +4,7 @@ from frozendict import frozendict
 
 from .base import NonUniqueIdModel
 from .battlesuit import Battlesuit
-from .container  import Container
+from .container import Container
 
 
 @dataclass(kw_only=True)

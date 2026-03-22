@@ -1,11 +1,9 @@
 from annotationlib import ForwardRef
-from collections.abc import Hashable, Iterable
+import ast
+from collections.abc import Hashable, Iterable, Sequence
+import inspect
 from pathlib import Path
 from typing import Protocol, get_args, get_origin
-
-from . import PART1_VALKYRIES, PART2_VALKYRIES
-from .models import Part, Valkyrie
-from .models.part import PART1, PART2
 
 from .errors import (
     NonDirectorySourceFolderError,
@@ -47,61 +45,59 @@ def validate_paths(source_folder: str | Path, output_folder: str | Path = "outpu
 
 
 def evaluate_type_argument(cls: type, parent: type) -> type:
-    orig_bases = cls.__orig_bases__
-    if len(orig_bases) != 1:
-        raise TypeError # TODO: Add custom exception class
+    orig_bases: Sequence[type] = cls.__orig_bases__
 
-    base = orig_bases[0]
-    if get_origin(base) is not parent:
-        raise TypeError # TODO: Add custom exception class
+    for base in orig_bases:
+        origin = get_origin(base)
+        if origin is not parent:
+            continue
 
-    type_arg: type | ForwardRef = get_args(base)[0]
-    if isinstance(type_arg, type):
+        type_arg: type | ForwardRef = get_args(base)[0]
+
+        if not isinstance(type_arg, type):
+            return _lazy_import_forwardref_base(type_arg, cls, base)
+
         return type_arg
-    else:
-        return type_arg.evaluate(owner=cls)
+
+    raise TypeError(f"Class {cls.__name__!r} does not inherit {parent.__name__!r}") # TODO: Add custom exception class
 
 
-def build_valkyrie_db():
-    # Store range start for each ID
-    range_starts: dict[tuple[str, "Part"], int] = {}
+def _lazy_import_forwardref_base(forward_ref: ForwardRef, cls: type, base: type):
+    forward_ref_str = forward_ref.__forward_arg__
 
-    # Merge raw data preserving the order
-    valkyries = [(PART1_VALKYRIES, PART1), (PART2_VALKYRIES, PART2)]
+    try:
+        arg_node = ast.parse(forward_ref_str).body[0].value # pyright: ignore[reportAttributeAccessIssue]
+    except Exception:
+        arg_node = None
 
-    for raw_valkyries, part in valkyries:
-        for raw in raw_valkyries:
-            id:   str = raw[0]
-            name: str = raw[1]
+    if isinstance(arg_node, ast.Subscript):
+        arg_node = arg_node.value
 
-            # Current start is the previous end
-            # Or 0 if current valkyrie is the first one with current ID
-            start = range_starts.get((id, part), 0)
+    if not isinstance(arg_node, ast.Name):
+        raise TypeError(f"Invalid type argument {forward_ref_str!r}")
 
-            if len(raw) > 2:
-                end = raw[2]
+    arg_type_name = ast.unparse(arg_node)
+    module = inspect.getmodule(cls)
 
-                valkyrie = Valkyrie(
-                        id=id,
-                        name=name,
-                        children_id_range=range(start, end)
-                    )
-            else:
-                valkyrie = Valkyrie(
-                        id=id,
-                        name=name
-                    )
-                end = valkyrie.children_id_range.stop
+    if module is None:
+        raise ImportError(
+            f"{cls.__name__!r} inherits class {base.__name__!r} "
+            f"with the type argument {forward_ref_str!r} "
+            f"but its source module cannot by identified"
+        ) # TODO: Add custom exception class
 
-            part.add_valkyrie(valkyrie)
-
-            # Current end is the next start
-            range_starts[(id, part)] = end
+    try:
+        return getattr(module, arg_type_name)
+    except AttributeError as e:
+        raise AttributeError(
+            f"{cls.__name__!r} inherits class {base.__name__!r} "
+            f"with the type argument {forward_ref_str!r} "
+            f"but module {module.__name__!r} has no attribute {arg_type_name!r}"
+        ) from e # TODO: Add custom exception class
 
 
 __all__ = [
     "validate_paths",
-    "build_valkyrie_db",
     "evaluate_type_argument",
     "HashableIterable"
 ]

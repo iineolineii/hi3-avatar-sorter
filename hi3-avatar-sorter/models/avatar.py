@@ -1,16 +1,18 @@
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Self, TypedDict
-
-from ..errors import EmptyFileNameError, EmptyNoteError, MissingAvatarIdError
+from typing import TYPE_CHECKING, Self, TypedDict
 
 from .base import BaseModel
-from .battlesuit import Battlesuit
 from .part import Part
-from .skin import Skin
-from .skin_rarity import SkinRarity
 from .valkyrie import Valkyrie
+from .battlesuit import Battlesuit
+from ..errors import EmptyFileNameError, EmptyNoteError, MissingAvatarIdError
+
+
+if TYPE_CHECKING:
+    from .skin import Skin
+    from .skin_rarity import SkinRarity
 
 
 class RawAvatar(TypedDict):

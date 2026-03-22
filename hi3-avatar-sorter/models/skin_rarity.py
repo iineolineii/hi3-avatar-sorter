@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from frozendict import frozendict
 
-from ..errors import UnknownSkinRarityIdError
 from .container import Container
 from .skin import Skin
+from ..errors import UnknownSkinRarityIdError
 
 
 @dataclass(kw_only=True)
