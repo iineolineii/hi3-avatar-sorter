@@ -1,13 +1,16 @@
+import sys
 from dataclasses import dataclass, field
-from typing import ClassVar, Self
-from warnings import deprecated
+from typing import ClassVar
 
-from frozendict import frozendict
+from typing_extensions import Self, deprecated
 
 from .container import NonUniqueIdContainer
 from .valkyrie import Valkyrie
 from ..errors import UnknownPartIdError, UnknownValkyrieIdError
 from ..utils import HashableIterable
+
+if sys.version_info <= (3, 15):
+    from frozendict import frozendict
 
 
 @dataclass(kw_only=True)

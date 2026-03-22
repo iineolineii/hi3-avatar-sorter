@@ -1,11 +1,12 @@
+import sys
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
-
-from frozendict import frozendict
 
 from .container import Container
 from .skin import Skin
 from ..errors import UnknownSkinRarityIdError
+
+if sys.version_info <= (3, 15):
+    from frozendict import frozendict
 
 
 @dataclass(kw_only=True)

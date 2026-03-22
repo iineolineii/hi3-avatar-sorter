@@ -1,14 +1,15 @@
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Self, TypedDict
+from typing import TYPE_CHECKING, TypedDict
+
+from typing_extensions import Self
 
 from .base import BaseModel
+from .battlesuit import Battlesuit
 from .part import Part
 from .valkyrie import Valkyrie
-from .battlesuit import Battlesuit
 from ..errors import EmptyFileNameError, EmptyNoteError, MissingAvatarIdError
-
 
 if TYPE_CHECKING:
     from .skin import Skin

@@ -1,9 +1,11 @@
+import sys
 from dataclasses import dataclass, field
-
-from frozendict import frozendict
 
 from .container import Container
 from .skin_rarity import SkinRarity
+
+if sys.version_info <= (3, 15):
+    from frozendict import frozendict
 
 
 @dataclass(kw_only=True)

@@ -1,7 +1,6 @@
-from annotationlib import ForwardRef
 from collections.abc import Hashable, Iterable, Sequence
 from pathlib import Path
-from typing import Protocol, get_args, get_origin
+from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, get_args, get_origin
 
 from .errors import (
     NonDirectorySourceFolderError,
@@ -10,7 +9,13 @@ from .errors import (
     NonEmptyOutputFolderError
 )
 
-class HashableIterable[T](Hashable, Iterable[T], Protocol):
+if TYPE_CHECKING:
+    from annotationlib import ForwardRef
+
+
+T = TypeVar("T", covariant=True)
+
+class HashableIterable(Generic[T], Hashable, Iterable[T], Protocol):
     pass
 
 
@@ -50,10 +55,12 @@ def evaluate_type_argument(cls: type, parent: type) -> type:
         if origin is not parent:
             continue
 
-        type_arg: type | ForwardRef = get_args(base)[0]
+        type_arg: "type | ForwardRef" = get_args(base)[0]
 
         if not isinstance(type_arg, type):
-            raise TypeError
+            raise TypeError # TODO: Add custom exception class
+                            # NOTE: Maybe draw some inspiration from typing.Generic:
+                            # TypeError: Parameters to Generic[...] must all be type variables or parameter specification variables.
 
         return type_arg
 

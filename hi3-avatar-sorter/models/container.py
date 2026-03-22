@@ -1,8 +1,9 @@
 from collections import defaultdict
 from contextlib import suppress
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, ClassVar
-from warnings import deprecated
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
+
+from typing_extensions import deprecated
 
 from .base import BaseModel
 from ..errors import EmptyReservationNoError, MissingChildrenAttributeError
@@ -11,9 +12,14 @@ from ..utils import evaluate_type_argument
 if TYPE_CHECKING:
     from .base import NonUniqueIdModel
 
+Child = TypeVar("Child", bound="BaseModel")
+
 
 @dataclass(kw_only=True)
-class Container[Child: "BaseModel"](BaseModel):
+class Container(
+    Generic[Child],
+    BaseModel
+):
     _children_type: type["Child"]      = field(init=False)
     _children:      dict[str, "Child"] = field(init=False)
 
@@ -76,9 +82,16 @@ class Container[Child: "BaseModel"](BaseModel):
             return self._children_type(id=child_id)
 
 
+NonUniqueIdChild = TypeVar("NonUniqueIdChild", bound="NonUniqueIdModel")
+
+
 @dataclass(kw_only=True)
-class NonUniqueIdContainer[Child: "NonUniqueIdModel"](Container[Child], evaluate_children_type=False):
-    _children: defaultdict[str, list["Child"]] = field(init=False) # pyright: ignore[reportIncompatibleVariableOverride]
+class NonUniqueIdContainer(
+    Generic[NonUniqueIdChild],
+    Container[NonUniqueIdChild],
+    evaluate_children_type=False,
+):
+    _children: defaultdict[str, list["NonUniqueIdChild"]] = field(init=False) # pyright: ignore[reportIncompatibleVariableOverride]
 
     def __init_subclass__(cls, evaluate_children_type: bool = True):
         super().__init_subclass__(evaluate_children_type=False)
@@ -90,10 +103,10 @@ class NonUniqueIdContainer[Child: "NonUniqueIdModel"](Container[Child], evaluate
         "Using _get_or_create_child is not available for non-unique ID containers. "
         "Use _get_child instead"
     )
-    def _get_or_create_child(self, child_id: str) -> Child:
+    def _get_or_create_child(self, child_id: str) -> NonUniqueIdChild:
         raise NotImplementedError
 
-    def _get_child(self, child_id: str, grandchild_id: str) -> "Child | None": # pyright: ignore[reportIncompatibleMethodOverride]
+    def _get_child(self, child_id: str, grandchild_id: str) -> "NonUniqueIdChild | None": # pyright: ignore[reportIncompatibleMethodOverride]
         with suppress(KeyError):
             found = self._children[child_id]
 
@@ -101,7 +114,7 @@ class NonUniqueIdContainer[Child: "NonUniqueIdModel"](Container[Child], evaluate
                 if int(grandchild_id) in child.children_id_range:
                     return child
 
-    def _add_child(self, child: "Child") -> "Child":
+    def _add_child(self, child: "NonUniqueIdChild") -> "NonUniqueIdChild":
         mex = self._get_mex()
         child.no = mex
         self._children[child.id].append(child)
@@ -117,7 +130,7 @@ class NonUniqueIdContainer[Child: "NonUniqueIdModel"](Container[Child], evaluate
         while self.__current_mex in self.__children_numbers:
             self.__current_mex += 1
 
-    def _reserve_child(self, child: "Child") -> "Child":
+    def _reserve_child(self, child: "NonUniqueIdChild") -> "NonUniqueIdChild":
         if child.no is None:
             raise EmptyReservationNoError(type(child).__name__, child.id)
 
