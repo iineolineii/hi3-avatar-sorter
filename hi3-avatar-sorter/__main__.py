@@ -63,9 +63,9 @@ renaming_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
     # EDGE CASE: Unrealistically to happen, but in case of
     # a new Kallen battlesuit, the below list should be
     # extended accordingly
-    (PART1, KALLEN, 11): (PART1, KALLEN, 11+40),
-    (PART1, KALLEN, 12): (PART1, KALLEN, 12+40),
-    (PART1, KALLEN, 14): (PART1, KALLEN, 14+40)
+    (PART1, KALLEN, 11): (PART1, KALLEN, 40+11),
+    (PART1, KALLEN, 12): (PART1, KALLEN, 40+12),
+    (PART1, KALLEN, 14): (PART1, KALLEN, 40+14)
 }
 
 
