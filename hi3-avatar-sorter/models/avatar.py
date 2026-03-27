@@ -17,18 +17,16 @@ if TYPE_CHECKING:
 
 
 class RawAvatar(TypedDict):
-    part_id:        str
-    valkyrie_id:    str
-    battlesuit_id:  str
-    skin_rarity_id: str | None
-    skin_id:        str | None
-    note:           str | None
+    part_id:        int | str
+    valkyrie_id:    int | str
+    battlesuit_id:  int | str
+    skin_rarity_id: int | str | None
+    skin_id:        int | str | None
+    note:           int | str | None
 
 
 @dataclass(kw_only=True)
 class Avatar(BaseModel):
-    id: str = field(init=False)
-
     part:        "Part"
     valkyrie:    "Valkyrie"
     battlesuit:  "Battlesuit"
@@ -70,13 +68,31 @@ class Avatar(BaseModel):
     @classmethod
     def from_raw(
         cls,
-        part_id:        str,
-        valkyrie_id:    str,
-        battlesuit_id:  str,
-        skin_rarity_id: str | None,
-        skin_id:        str | None,
-        note:           str | None
+        part_id:        int | str,
+        valkyrie_id:    int | str,
+        battlesuit_id:  int | str,
+        skin_rarity_id: int | str | None = None,
+        skin_id:        int | str | None = None,
+        note:           int | str | None = None
     ):
+        part_id = str(part_id)
+        valkyrie_id = str(valkyrie_id)
+        battlesuit_id = str(battlesuit_id)
+
+        avatar_id = part_id + valkyrie_id + battlesuit_id
+
+        if skin_rarity_id is not None:
+            skin_rarity_id = str(skin_rarity_id)
+            avatar_id += skin_rarity_id
+
+        if skin_id is not None:
+            skin_id = str(skin_id)
+            avatar_id += skin_id
+
+        if note is not None:
+            note = str(note)
+            avatar_id += note
+
         part = Part.by_id(part_id)
         valkyrie = part.get_valkyrie(valkyrie_id, battlesuit_id)
         battlesuit = valkyrie.get_or_create_battlesuit(battlesuit_id)
@@ -93,6 +109,7 @@ class Avatar(BaseModel):
         #     note = None
 
         return cls(
+            id=avatar_id,
             part=part,
             valkyrie=valkyrie,
             battlesuit=battlesuit,

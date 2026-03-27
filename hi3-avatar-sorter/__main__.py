@@ -1,10 +1,11 @@
 from pathlib import Path
 from typing import Literal
 
-from .models import Avatar, Part
-from .models.part import PART1, PART2
+from .models import Avatar
 from .utils import validate_paths
 
+PART1 = 1
+PART2 = 2
 
 KIANA = KALLEN = 1
 MEI = SAKURA = 2
@@ -15,10 +16,10 @@ RITA = 7
 ELYSIA_P2 = 10
 ELYSIA_P1 = 22
 
-RawAvatarWithNote = tuple[Part, int, int, str]
-RawAvatarWithSkinAndNote = tuple[Part, int, int, int, int, str]
-RawAvatarWithSkin = tuple[Part, int, int, int, int]
-RawAvatar = tuple[Part, int, int]
+RawAvatarWithNote = tuple[int | str, int | str, int | str, str]
+RawAvatarWithSkinAndNote = tuple[int | str, int | str, int | str, int | str, int | str, str]
+RawAvatarWithSkin = tuple[int | str, int | str, int | str, int | str, int | str]
+RawAvatar = tuple[int | str, int | str, int | str]
 
 AvatarTuple = RawAvatar | RawAvatarWithNote | RawAvatarWithSkin | RawAvatarWithSkinAndNote
 
