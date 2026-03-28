@@ -18,7 +18,7 @@ class BaseModel:
             cls.__hash__ = BaseModel.__hash__
 
     def __post_init__(self):
-        self._validate_id(self.id)
+        self.id = self._validate_id(self.id)
 
     @classmethod
     def _validate_id(cls, id: str) -> str:

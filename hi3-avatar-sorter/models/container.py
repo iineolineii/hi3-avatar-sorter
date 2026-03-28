@@ -7,7 +7,6 @@ from typing_extensions import deprecated
 
 from .base import BaseModel
 from ..errors import EmptyReservationNoError, MissingChildrenAttributeError
-from ..utils import evaluate_type_argument
 
 if TYPE_CHECKING:
     from .base import NonUniqueIdModel
@@ -16,29 +15,21 @@ Child = TypeVar("Child", bound="BaseModel")
 
 
 @dataclass(kw_only=True)
-class Container(
-    Generic[Child],
-    BaseModel
-):
-    _children_type: type["Child"]      = field(init=False)
+class Container(Generic[Child], BaseModel):
     _children:      dict[str, "Child"] = field(init=False)
 
     _children_accessor_name: set[int] = field(init=False, default_factory=set)
-    _current_mex:      int      = field(init=False, default=1)
-    _children_attr_name:    ClassVar[str]
+    _current_mex:            int      = field(init=False, default=1)
+    _children_attr_name:     ClassVar[str]
 
     def __post_init__(self):
         super().__post_init__()
-        self._rename_children_attr()
+        self._add_children_attr()
 
-    def __init_subclass__(
-        cls,
-        evaluate_children_type: bool = True,
-        evaluate_children_name: bool = True
-    ):
+    def __init_subclass__(cls, has_children_attribute: bool = True):
         super().__init_subclass__()
 
-        if evaluate_children_name:
+        if has_children_attribute:
             # Find attribute annotated with frozendict
             for name, annotation in cls.__annotations__.items():
                 if str(annotation).startswith("frozendict"):
@@ -47,10 +38,7 @@ class Container(
             else:
                 raise MissingChildrenAttributeError(cls.__name__)
 
-        if evaluate_children_type:
-            cls._children_type = evaluate_type_argument(cls, Container)
-
-    def _rename_children_attr(self):
+    def _add_children_attr(self):
         # Get the name of the attribute used by subclasses for storage
         target_attr_name = self._children_attr_name
 
@@ -105,18 +93,14 @@ NonUniqueIdChild = TypeVar("NonUniqueIdChild", bound="NonUniqueIdModel")
 class NonUniqueIdContainer(
     Generic[NonUniqueIdChild],
     Container[NonUniqueIdChild],
-    evaluate_children_type=False,
-    evaluate_children_name=False
+    has_children_attribute=False
 ):
     _children: defaultdict[str, list["NonUniqueIdChild"]] = field(init=False)
 
-    def __init_subclass__(cls, evaluate_children_type: bool = True):
-        super().__init_subclass__(evaluate_children_type=False, evaluate_children_name=True)
+    def __init_subclass__(cls):
+        super().__init_subclass__(has_children_attribute=True)
 
-        if evaluate_children_type:
-            cls._children_type = evaluate_type_argument(cls, NonUniqueIdContainer)
-
-    def _rename_children_attr(self):
+    def _add_children_attr(self):
         # Get the name of the attribute used by subclasses for storage
         target_attr_name = self._children_attr_name
 

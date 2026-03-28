@@ -1,5 +1,7 @@
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 from .container import Container
 from .skin import Skin
@@ -23,13 +25,10 @@ class SkinRarity(Container[Skin]):
 
     @classmethod
     def _validate_id(cls, id: str) -> str:
-        if id not in VALID_IDS:
+        if id not in cls.valid_ids:
             raise UnknownSkinRarityIdError(id)
 
         return id
-
-    def add_skin(self, skin: "Skin") -> "Skin":
-        return self._add_child(skin)
 
     def reserve_skin(self, skin: "Skin") -> "Skin":
         return self._reserve_child(skin)

@@ -1,6 +1,6 @@
-from collections.abc import Hashable, Iterable, Sequence
+from collections.abc import Hashable, Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, Protocol, TypeVar, get_args, get_origin
+from typing import Generic, Protocol, TypeVar
 
 from .errors import (
     NonDirectorySourceFolderError,
@@ -8,9 +8,6 @@ from .errors import (
     NonDirectoryOutputFolderError,
     NonEmptyOutputFolderError
 )
-
-if TYPE_CHECKING:
-    from annotationlib import ForwardRef
 
 
 T = TypeVar("T", covariant=True)
@@ -47,28 +44,7 @@ def validate_paths(source_folder: str | Path, output_folder: str | Path = "outpu
     return source_folder, output_folder
 
 
-def evaluate_type_argument(cls: type, parent: type) -> type:
-    orig_bases: Sequence[type] = cls.__orig_bases__
-
-    for base in orig_bases:
-        origin = get_origin(base)
-        if origin is not parent:
-            continue
-
-        type_arg: "type | ForwardRef" = get_args(base)[0]
-
-        if not isinstance(type_arg, type):
-            raise TypeError # TODO: Add custom exception class
-                            # NOTE: Maybe draw some inspiration from typing.Generic:
-                            # TypeError: Parameters to Generic[...] must all be type variables or parameter specification variables.
-
-        return type_arg
-
-    raise TypeError(f"Class {cls.__name__!r} does not inherit {parent.__name__!r}") # TODO: Add custom exception class
-
-
 __all__ = [
     "validate_paths",
-    "evaluate_type_argument",
     "HashableIterable"
 ]

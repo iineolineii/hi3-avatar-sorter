@@ -42,21 +42,10 @@ class Avatar(BaseModel):
             self.battlesuit.reserve_skin_rarity(self.skin_rarity)
             self.skin_rarity.reserve_skin(self.skin)
 
-    def register(self):
-        # self.add_part(self.part)
-        # self.part.add_valkyrie(self.valkyrie)
-        self.valkyrie.add_battlesuit(self.battlesuit)
-
-        if self.skin_rarity is not None and self.skin is not None:
-            self.battlesuit.add_skin_rarity(self.skin_rarity)
-            self.skin_rarity.add_skin(self.skin)
-
-
     @classmethod
     def from_string(cls, string: str) -> Self:
         raw_avatar = cls._raw_from_string(string)
         self = cls.from_raw(**raw_avatar)
-        self.register()
 
         return self
 
