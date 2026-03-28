@@ -42,3 +42,6 @@ class BaseModel:
 @dataclass(kw_only=True)
 class NonUniqueIdModel(BaseModel):
     children_id_range: range = field(default=range(0, 100))
+
+
+__all__ = ["BaseModel", "NonUniqueIdModel"]

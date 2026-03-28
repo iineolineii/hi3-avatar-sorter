@@ -166,3 +166,6 @@ class NonUniqueIdContainer(
         self._update_mex()
         self._children[child.id].append(child)
         return child
+
+
+__all__ = ["Container", "NonUniqueIdContainer"]

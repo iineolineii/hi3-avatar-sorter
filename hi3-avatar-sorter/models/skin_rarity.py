@@ -19,6 +19,8 @@ class SkinRarity(Container[Skin]):
     Instead, use the `add_skin` method
     """
 
+    valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
+
     @classmethod
     def _validate_id(cls, id: str) -> str:
         if id not in VALID_IDS:
@@ -42,4 +44,4 @@ class SkinRarity(Container[Skin]):
         return f"{int(self)}★"
 
 
-VALID_IDS = ("02", "03", "04", "05")
+__all__ = ["SkinRarity"]

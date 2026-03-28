@@ -26,3 +26,6 @@ class Battlesuit(Container[SkinRarity]):
 
     def get_or_create_skin_rarity(self, skin_rarity_id: str) -> "SkinRarity":
         return self._get_or_create_child(skin_rarity_id)
+
+
+__all__ = ["Battlesuit"]

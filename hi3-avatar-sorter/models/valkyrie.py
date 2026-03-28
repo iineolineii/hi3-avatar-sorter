@@ -32,3 +32,6 @@ class Valkyrie(NonUniqueIdModel, Container[Battlesuit]):
 
     def __str__(self) -> str:
         return self.name
+
+
+__all__ = ["Valkyrie"]

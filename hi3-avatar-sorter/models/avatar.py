@@ -217,3 +217,6 @@ class Avatar(BaseModel):
             result += f", {self.note}"
 
         return result
+
+
+__all__ = ["RawAvatar", "Avatar"]
