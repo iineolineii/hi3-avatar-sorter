@@ -44,4 +44,7 @@ PART2_VALKYRIES: list[tuple[str, str] | tuple[str, str, int]] = [
     ("09", "Sparkle"                )
 ]
 
-__all__ = ["PART1_VALKYRIES", "PART2_VALKYRIES"]
+
+__vesrion__ = (0, 0, 1)
+
+__all__ = ["PART1_VALKYRIES", "PART2_VALKYRIES", "__vesrion__"]
