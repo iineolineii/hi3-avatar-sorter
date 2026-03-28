@@ -78,12 +78,12 @@ class UnknownSkinRarityIdError(ParsingError):
 
 
 class TooLongIdError(ParsingError):
-    def __init__(self, id: str, id_length: int, class_name: str) -> None:
+    def __init__(self, id: str, max_length: int, class_name: str) -> None:
         self.id = id
-        self.id_length = id_length
+        self.max_length = max_length
         self.class_name = class_name
 
-        super().__init__(f"ID {id!r} length {id_length!r} is too long for {class_name!r}")
+        super().__init__(f"ID {id!r} is too long: it's length {len(id)!r} exceeds the maximum {max_length!r} for class {class_name!r}")
 
 
 class EmptyNoteError(ParsingError):
@@ -124,5 +124,5 @@ __all__ = [
     "TooLongIdError",
     "EmptyNoteError",
     "EmptyReservationNoError",
-    "MissingChildrenAttributeError",
+    "MissingChildrenAttributeError"
 ]

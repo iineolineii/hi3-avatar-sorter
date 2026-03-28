@@ -1,8 +1,11 @@
 from pathlib import Path
 from typing import Literal
 
+from . import PART1_VALKYRIES, PART2_VALKYRIES
 from .models import Avatar
+from .models.part import build_valkyrie_db
 from .utils import validate_paths
+
 
 PART1 = 1
 PART2 = 2
@@ -23,7 +26,7 @@ RawAvatar = tuple[int | str, int | str, int | str]
 
 AvatarTuple = RawAvatar | RawAvatarWithNote | RawAvatarWithSkin | RawAvatarWithSkinAndNote
 
-renaming_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
+replacement_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
     # 3rd Elysia battlesuit is not a new character
     (PART2, ELYSIA_P2, 1): (PART1, ELYSIA_P1, 3),
 
@@ -76,7 +79,8 @@ def main(
     format: Literal["short", "long"] = "long"
 ):
     source_folder, output_folder = validate_paths(source_folder, output_folder)
+    build_valkyrie_db(PART1_VALKYRIES, PART2_VALKYRIES)
 
     for file in source_folder.iterdir():
         # _, avatar_raw = Avatar._raw_from_file(file, format)
-        avatar_raw[""]
+        avatar = Avatar.from_file(file)

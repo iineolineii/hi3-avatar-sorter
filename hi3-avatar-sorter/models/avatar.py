@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 from typing_extensions import Self
 
@@ -34,6 +34,7 @@ class Avatar(BaseModel):
     skin:        "Skin       | None" = None
     note:        "str        | None" = None
 
+    id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
     def reserve(self):
         # self.reserve_part(self.part)
@@ -83,15 +84,12 @@ class Avatar(BaseModel):
 
         if skin_rarity_id is not None:
             skin_rarity_id = str(skin_rarity_id)
-            avatar_id += skin_rarity_id
 
         if skin_id is not None:
             skin_id = str(skin_id)
-            avatar_id += skin_id
 
         if note is not None:
             note = str(note)
-            avatar_id += note
 
         part = Part.by_id(part_id)
         valkyrie = part.get_valkyrie(valkyrie_id, battlesuit_id)
@@ -138,7 +136,7 @@ class Avatar(BaseModel):
         cls,
         file: str | Path
     ) -> RawAvatar:
-        file_name = Path(file).name
+        file_name = Path(file).stem
 
         if not file_name:
             raise EmptyFileNameError(file_name)

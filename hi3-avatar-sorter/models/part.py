@@ -60,6 +60,8 @@ class Part(NonUniqueIdContainer[Valkyrie]):
         for id in self.ids:
             self._validate_id(id)
 
+        self._rename_children_attr()
+
     def __hash__(self) -> int:
         return hash((self.ids, self.no))
 

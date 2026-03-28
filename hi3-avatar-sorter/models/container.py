@@ -23,32 +23,45 @@ class Container(
     _children_type: type["Child"]      = field(init=False)
     _children:      dict[str, "Child"] = field(init=False)
 
-    __children_numbers: set[int] = field(init=False, default_factory=set)
-    __current_mex:      int      = field(init=False, default=1)
-    __children_attr:    ClassVar[str]
+    _children_accessor_name: set[int] = field(init=False, default_factory=set)
+    _current_mex:      int      = field(init=False, default=1)
+    _children_attr_name:    ClassVar[str]
 
     def __post_init__(self):
         super().__post_init__()
         self._rename_children_attr()
 
-    def __init_subclass__(cls, evaluate_children_type: bool = True):
+    def __init_subclass__(
+        cls,
+        evaluate_children_type: bool = True,
+        evaluate_children_name: bool = True
+    ):
         super().__init_subclass__()
 
-        if evaluate_children_type:
+        if evaluate_children_name:
             # Find attribute annotated with frozendict
             for name, annotation in cls.__annotations__.items():
                 if str(annotation).startswith("frozendict"):
-                    cls.__children_attr = name
+                    cls._children_attr_name = name
                     break
             else:
                 raise MissingChildrenAttributeError(cls.__name__)
 
+        if evaluate_children_type:
             cls._children_type = evaluate_type_argument(cls, Container)
 
     def _rename_children_attr(self):
-        # Copy named frozendict children to the mutable defaultdict
-        self._children = defaultdict(getattr(self, self.__children_attr))
-        setattr(self, self.__children_attr, self._children)
+        # Get the name of the attribute used by subclasses for storage
+        target_attr_name = self._children_attr_name
+
+        # Extract the initial data
+        initial_children = getattr(self, target_attr_name)
+
+        # Initialize the unified mutable container
+        self._children = dict(initial_children)
+
+        # Replace the target attribute with the new unified container
+        setattr(self, target_attr_name, self._children)
 
     def _add_child(self, child: "Child") -> "Child":
         mex = self._get_mex()
@@ -57,20 +70,20 @@ class Container(
         return child
 
     def _get_mex(self) -> int:
-        mex = self.__current_mex
-        self.__children_numbers.add(mex)
+        mex = self._current_mex
+        self._children_accessor_name.add(mex)
         self._update_mex()
         return mex
 
     def _update_mex(self) -> None:
-        while self.__current_mex in self.__children_numbers:
-            self.__current_mex += 1
+        while self._current_mex in self._children_accessor_name:
+            self._current_mex += 1
 
     def _reserve_child(self, child: "Child") -> "Child":
         if child.no is None:
             raise EmptyReservationNoError(type(child).__name__, child.id)
 
-        self.__current_mex = child.no
+        self._current_mex = child.no
         self._update_mex()
         self._children[child.id] = child
         return child
@@ -90,14 +103,29 @@ class NonUniqueIdContainer(
     Generic[NonUniqueIdChild],
     Container[NonUniqueIdChild],
     evaluate_children_type=False,
+    evaluate_children_name=False
 ):
-    _children: defaultdict[str, list["NonUniqueIdChild"]] = field(init=False) # pyright: ignore[reportIncompatibleVariableOverride]
+    _children: defaultdict[str, list["NonUniqueIdChild"]] = field(init=False)
 
     def __init_subclass__(cls, evaluate_children_type: bool = True):
-        super().__init_subclass__(evaluate_children_type=False)
+        super().__init_subclass__(evaluate_children_type=False, evaluate_children_name=True)
 
         if evaluate_children_type:
             cls._children_type = evaluate_type_argument(cls, NonUniqueIdContainer)
+
+    def _rename_children_attr(self):
+        # Get the name of the attribute used by subclasses for storage
+        target_attr_name = self._children_attr_name
+
+        # Extract the initial data
+        initial_children = getattr(self, target_attr_name)
+
+        # Initialize the unified mutable container
+        # for multiple children with the same ID
+        self._children = defaultdict(list, initial_children) # pyright: ignore[reportIncompatibleVariableOverride]
+
+        # Replace the target attribute with the new unified container
+        setattr(self, target_attr_name, self._children)
 
     @deprecated(
         "Using _get_or_create_child is not available for non-unique ID containers. "
@@ -121,20 +149,20 @@ class NonUniqueIdContainer(
         return child
 
     def _get_mex(self) -> int:
-        mex = self.__current_mex
-        self.__children_numbers.add(mex)
+        mex = self._current_mex
+        self._children_accessor_name.add(mex)
         self._update_mex()
         return mex
 
     def _update_mex(self) -> None:
-        while self.__current_mex in self.__children_numbers:
-            self.__current_mex += 1
+        while self._current_mex in self._children_accessor_name:
+            self._current_mex += 1
 
     def _reserve_child(self, child: "NonUniqueIdChild") -> "NonUniqueIdChild":
         if child.no is None:
             raise EmptyReservationNoError(type(child).__name__, child.id)
 
-        self.__current_mex = child.no
+        self._current_mex = child.no
         self._update_mex()
         self._children[child.id].append(child)
         return child

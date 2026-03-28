@@ -36,4 +36,4 @@ class SkinRarity(Container[Skin]):
         return self._get_or_create_child(skin_id)
 
 
-VALID_IDS = ("2", "3", "4", "5")
+VALID_IDS = ("02", "03", "04", "05")
