@@ -26,7 +26,7 @@ RawAvatar = tuple[int | str, int | str, int | str]
 
 AvatarTuple = RawAvatar | RawAvatarWithNote | RawAvatarWithSkin | RawAvatarWithSkinAndNote
 
-replacement_table: dict[str | AvatarTuple | Avatar, str | AvatarTuple | Avatar] = {
+replacement_table: dict[AvatarTuple, AvatarTuple] = {
     # Beach avatars do not have battlesuit IDs
     (PART1, KIANA,   "", 4, 1): (PART1, KIANA,   1, 4, 1),
     (PART1, KIANA,   "", 4, 1): (PART1, KIANA,   1, 4, 1),
