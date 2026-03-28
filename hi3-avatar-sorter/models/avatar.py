@@ -100,7 +100,7 @@ class Avatar(BaseModel):
         # else:
         #     note = None
 
-        return cls(
+        self = cls(
             id=avatar_id,
             part=part,
             valkyrie=valkyrie,
@@ -110,6 +110,18 @@ class Avatar(BaseModel):
             note=note
         )
 
+        self.__raw = { # pyright: ignore[reportAttributeAccessIssue]
+            "part_id":        part_id,
+            "valkyrie_id":    valkyrie_id,
+            "battlesuit_id":  battlesuit_id,
+            "skin_rarity_id": skin_rarity_id,
+            "skin_id":        skin_id,
+            "note":           note
+        }
+
+        return self
+
+    from_dict = from_raw
 
     @classmethod
     def format_note(
@@ -218,6 +230,28 @@ class Avatar(BaseModel):
             result += f", {self.note}"
 
         return result
+
+
+    @property
+    def raw(self):
+        try:
+            return self.__raw
+
+        except AttributeError:
+            self.__raw = self._raw_from_string(self.id)
+
+            if self.skin_rarity is not None:
+                self.__raw["skin_rarity_id"] = self.skin_rarity.id
+
+            if self.skin is not None:
+                self.__raw["skin_id"] = self.skin.id
+
+            if self.note is not None:
+                self.__raw["note"] = self.note
+
+            return self.__raw
+
+    to_dict = raw
 
 
 __all__ = ["RawAvatar", "Avatar"]
