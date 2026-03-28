@@ -34,8 +34,8 @@ class SkinRarity(Container[Skin]):
     def reserve_skin(self, skin: "Skin") -> "Skin":
         return self._reserve_child(skin)
 
-    def get_or_create_skin(self, skin_id: str) -> "Skin":
-        return self._get_or_create_child(skin_id)
+    def get_or_add_skin(self, skin: "Skin") -> "Skin":
+        return self._get_or_add_child(skin)
 
     def __int__(self) -> int:
         return int(self.id)

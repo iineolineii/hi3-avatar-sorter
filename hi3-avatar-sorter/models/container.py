@@ -69,6 +69,12 @@ class Container(
         self._children[child.id] = child
         return child
 
+    def _get_child(self, child_id: str) -> "Child | None":
+        try:
+            return self._children[child_id]
+        except KeyError:
+            return None
+
     def _get_mex(self) -> int:
         mex = self._current_mex
         self._children_accessor_name.add(mex)
@@ -88,11 +94,8 @@ class Container(
         self._children[child.id] = child
         return child
 
-    def _get_or_create_child(self, child_id: str) -> "Child":
-        try:
-            return self._children[child_id]
-        except KeyError:
-            return self._children_type(id=child_id)
+    def _get_or_add_child(self, child: "Child") -> "Child":
+        return self._get_child(child.id) or self._add_child(child)
 
 
 NonUniqueIdChild = TypeVar("NonUniqueIdChild", bound="NonUniqueIdModel")
@@ -128,10 +131,10 @@ class NonUniqueIdContainer(
         setattr(self, target_attr_name, self._children)
 
     @deprecated(
-        "Using _get_or_create_child is not available for non-unique ID containers. "
+        "Using _get_or_add_child is not available for non-unique ID containers. "
         "Use _get_child instead"
     )
-    def _get_or_create_child(self, child_id: str) -> NonUniqueIdChild:
+    def _get_or_add_child(self, child: "NonUniqueIdChild") -> NonUniqueIdChild:
         raise NotImplementedError
 
     def _get_child(self, child_id: str, grandchild_id: str) -> "NonUniqueIdChild | None": # pyright: ignore[reportIncompatibleMethodOverride]

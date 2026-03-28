@@ -1,13 +1,14 @@
 from collections.abc import Iterator
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, TypedDict
+from dataclasses import dataclass
+from typing import ClassVar, TypedDict
 
 from typing_extensions import Self
 
 from .base import BaseModel
 from .battlesuit import Battlesuit
 from .part import Part
+from .skin import Skin
+from .skin_rarity import SkinRarity
 from .valkyrie import Valkyrie
 from ..errors import EmptyInputStringError, EmptyNoteError, MissingAvatarIdError
 
@@ -86,11 +87,11 @@ class Avatar(BaseModel):
 
         part = Part.by_id(part_id)
         valkyrie = part.get_valkyrie(valkyrie_id, battlesuit_id)
-        battlesuit = valkyrie.get_or_create_battlesuit(battlesuit_id)
+        battlesuit = valkyrie.get_or_add_battlesuit(Battlesuit(id=battlesuit_id))
 
         if skin_rarity_id is not None and skin_id is not None:
-            skin_rarity = battlesuit.get_or_create_skin_rarity(skin_rarity_id)
-            skin = skin_rarity.get_or_create_skin(skin_id)
+            skin_rarity = battlesuit.get_or_add_skin_rarity(SkinRarity(id=skin_rarity_id))
+            skin = skin_rarity.get_or_add_skin(Skin(id=skin_id))
         else:
             skin_rarity = skin = None
 
