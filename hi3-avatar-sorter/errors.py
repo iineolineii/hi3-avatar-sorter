@@ -41,11 +41,11 @@ class NonEmptyOutputFolderError(PathError):
         super().__init__(f"Output folder {str(folder)!r} is not empty")
 
 
-class EmptyFileNameError(PathError):
+class EmptyInputStringError(ParsingError):
     def __init__(self, file_name: str) -> None:
         self.file_name = file_name
 
-        super().__init__(f"File name is empty")
+        super().__init__(f"Input string is empty")
 
 
 class MissingAvatarIdError(ParsingError):
@@ -116,7 +116,7 @@ __all__ = [
     "EmptySourceFolderError",
     "NonDirectoryOutputFolderError",
     "NonEmptyOutputFolderError",
-    "EmptyFileNameError",
+    "EmptyInputStringError",
     "MissingAvatarIdError",
     "UnknownPartIdError",
     "UnknownValkyrieIdError",

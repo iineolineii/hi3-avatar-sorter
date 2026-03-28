@@ -9,11 +9,7 @@ from .base import BaseModel
 from .battlesuit import Battlesuit
 from .part import Part
 from .valkyrie import Valkyrie
-from ..errors import EmptyFileNameError, EmptyNoteError, MissingAvatarIdError
-
-if TYPE_CHECKING:
-    from .skin import Skin
-    from .skin_rarity import SkinRarity
+from ..errors import EmptyInputStringError, EmptyNoteError, MissingAvatarIdError
 
 
 class RawAvatar(TypedDict):
@@ -56,11 +52,8 @@ class Avatar(BaseModel):
 
 
     @classmethod
-    def from_file(
-        cls,
-        file: str | Path
-    ) -> Self:
-        raw_avatar = cls._raw_from_file(file)
+    def from_string(cls, string: str) -> Self:
+        raw_avatar = cls._raw_from_string(string)
         self = cls.from_raw(**raw_avatar)
         self.register()
 
@@ -132,16 +125,11 @@ class Avatar(BaseModel):
 
 
     @classmethod
-    def _raw_from_file(
-        cls,
-        file: str | Path
-    ) -> RawAvatar:
-        file_name = Path(file).stem
+    def _raw_from_string(cls, string: str) -> RawAvatar:
+        if not string:
+            raise EmptyInputStringError(string)
 
-        if not file_name:
-            raise EmptyFileNameError(file_name)
-
-        name_parts = file_name.split("_", maxsplit=3)
+        name_parts = string.split("_", maxsplit=3)
 
         skin_rarity_id: str | None = None
         skin_id:        str | None = None
@@ -150,7 +138,7 @@ class Avatar(BaseModel):
         match name_parts:
             # Length is 0: Invalid file name (empty string or "_")
             case []:
-                raise MissingAvatarIdError(file_name)
+                raise MissingAvatarIdError(string)
 
             # Length is 1: Only avatar ID
             case [avatar_id]:
