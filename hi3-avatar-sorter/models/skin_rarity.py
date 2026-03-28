@@ -35,5 +35,11 @@ class SkinRarity(Container[Skin]):
     def get_or_create_skin(self, skin_id: str) -> "Skin":
         return self._get_or_create_child(skin_id)
 
+    def __int__(self) -> int:
+        return int(self.id)
+
+    def __str__(self) -> str:
+        return f"{int(self)}★"
+
 
 VALID_IDS = ("02", "03", "04", "05")

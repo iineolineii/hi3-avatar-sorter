@@ -211,7 +211,7 @@ class Avatar(BaseModel):
         result = f"{self.valkyrie} {self.battlesuit}"
 
         if self.skin_rarity is not None and self.skin is not None:
-            result += f", {self.skin_rarity} {self.skin}"
+            result += f", Skin {self.skin_rarity} {self.skin}"
 
         if self.note:
             result += f", {self.note}"

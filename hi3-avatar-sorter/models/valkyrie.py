@@ -29,3 +29,6 @@ class Valkyrie(NonUniqueIdModel, Container[Battlesuit]):
 
     def get_or_create_battlesuit(self, battlesuit_id: str) -> "Battlesuit":
         return self._get_or_create_child(battlesuit_id)
+
+    def __str__(self) -> str:
+        return self.name
