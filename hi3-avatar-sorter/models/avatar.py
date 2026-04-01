@@ -33,7 +33,7 @@ class Avatar(BaseModel):
 
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
-    def reserve(self):
+    def reserve(self) -> None:
         # self.reserve_part(self.part)
         # self.part.reserve_valkyrie(self.valkyrie)
         self.valkyrie.reserve_battlesuit(self.battlesuit)
@@ -43,9 +43,12 @@ class Avatar(BaseModel):
             self.skin_rarity.reserve_skin(self.skin)
 
     @classmethod
-    def from_string(cls, string: str) -> Self:
+    def from_string(cls, string: str, *, reserve: bool = False) -> Self:
         raw_avatar = cls._raw_from_string(string)
         self = cls.from_raw(**raw_avatar)
+
+        if reserve:
+            self.reserve()
 
         return self
 
@@ -57,8 +60,10 @@ class Avatar(BaseModel):
         battlesuit_id:  int | str,
         skin_rarity_id: int | str | None = None,
         skin_id:        int | str | None = None,
-        note:           int | str | None = None
-    ):
+        note:           int | str | None = None,
+        *,
+        reserve: bool = False
+    ) -> Self:
         part_id = str(part_id)
         valkyrie_id = str(valkyrie_id)
         battlesuit_id = str(battlesuit_id)
@@ -107,6 +112,9 @@ class Avatar(BaseModel):
             "skin_id":        skin_id,
             "note":           note
         }
+
+        if reserve:
+            self.reserve()
 
         return self
 
