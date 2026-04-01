@@ -44,7 +44,7 @@ class Avatar(BaseModel):
 
     @classmethod
     def from_string(cls, string: str, *, reserve: bool = False) -> Self:
-        raw_avatar = cls._raw_from_string(string)
+        raw_avatar = cls.raw_from_string(string)
         self = cls.from_raw(**raw_avatar)
 
         if reserve:
@@ -121,10 +121,7 @@ class Avatar(BaseModel):
     from_dict = from_raw
 
     @classmethod
-    def format_note(
-        cls,
-        note: str | None
-    ) -> str:
+    def format_note(cls, note: str | None) -> str:
         if not note:
             raise EmptyNoteError(note)
 
@@ -135,7 +132,7 @@ class Avatar(BaseModel):
 
 
     @classmethod
-    def _raw_from_string(cls, string: str) -> RawAvatar:
+    def raw_from_string(cls, string: str) -> RawAvatar:
         if not string:
             raise EmptyInputStringError(string)
 
@@ -170,7 +167,7 @@ class Avatar(BaseModel):
             case _:
                 raise AssertionError("This code should be unreachable")
 
-        avatar_id = cls._validate_id(avatar_id)
+        avatar_id = cls.validate_id(avatar_id)
 
         # part_id, valkyrie_id, and battlesuit_id appear next to each other in avatar_id
         pos = 0
@@ -235,7 +232,7 @@ class Avatar(BaseModel):
             return self.__raw
 
         except AttributeError:
-            self.__raw = self._raw_from_string(self.id)
+            self.__raw = self.raw_from_string(self.id)
 
             if self.skin_rarity is not None:
                 self.__raw["skin_rarity_id"] = self.skin_rarity.id

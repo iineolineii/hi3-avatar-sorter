@@ -18,10 +18,10 @@ class BaseModel:
             cls.__hash__ = BaseModel.__hash__
 
     def __post_init__(self):
-        self.id = self._validate_id(self.id)
+        self.id = self.validate_id(self.id)
 
     @classmethod
-    def _validate_id(cls, id: str) -> str:
+    def validate_id(cls, id: str) -> str:
         id = id.rjust(cls.id_length, "0")
 
         if len(id) > cls.id_length:

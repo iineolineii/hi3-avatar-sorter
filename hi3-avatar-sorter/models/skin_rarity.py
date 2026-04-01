@@ -24,7 +24,9 @@ class SkinRarity(Container[Skin]):
     valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
 
     @classmethod
-    def _validate_id(cls, id: str) -> str:
+    def validate_id(cls, id: str) -> str:
+        id = super().validate_id(id)
+
         if id not in cls.valid_ids:
             raise UnknownSkinRarityIdError(id)
 
