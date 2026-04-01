@@ -73,11 +73,11 @@ PART_MAP: dict["PartIDFormat", dict[int, Part]] = defaultdict(dict)
 PARTS_BY_ID: dict[str, "Part"] = {}
 
 
-def build_part_db():
+def build_part_map():
     for id_format, ids in PART_IDS.items():
         for idx, id in enumerate(ids):
             if id:
                 PART_MAP[id_format][idx+1] = Part(id=id, no=idx+1, id_format=id_format)
                 PARTS_BY_ID[id] = PART_MAP[id_format][idx+1]
 
-__all__ = ["Part", "build_part_db"]
+__all__ = ["Part", "build_part_map"]

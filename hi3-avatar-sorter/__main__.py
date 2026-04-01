@@ -3,9 +3,8 @@ from pathlib import Path
 from . import PART1_VALKYRIES, PART2_VALKYRIES
 from .errors import ParsingError
 from .models import Avatar
-from .models.part import build_valkyrie_db
+from .models.valkyrie import build_valkyrie_map
 from .utils import validate_paths
-
 
 PART1 = 1
 PART2 = 2
