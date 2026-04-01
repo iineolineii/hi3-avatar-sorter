@@ -5,7 +5,7 @@ from typing import Literal
 
 from typing_extensions import Self
 
-from .container import NonUniqueIdContainer
+from .containers import NonUniqueIdContainer
 from .valkyrie import Valkyrie
 from ..errors import (
     UnknownPartIdError,

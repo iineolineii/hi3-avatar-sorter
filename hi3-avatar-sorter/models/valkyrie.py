@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from .base import NonUniqueIdModel
 from .battlesuit import Battlesuit
-from .container import Container
+from .containers import Container
 
 if sys.version_info <= (3, 15):
     from frozendict import frozendict

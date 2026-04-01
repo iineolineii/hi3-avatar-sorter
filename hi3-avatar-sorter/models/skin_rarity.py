@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from .container import Container
+from .containers import Container
 from .skin import Skin
 from ..errors import UnknownSkinRarityIdError
 
