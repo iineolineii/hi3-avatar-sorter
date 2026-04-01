@@ -1,24 +1,28 @@
 import sys
+from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import ClassVar
+from typing import Literal
 
-from typing_extensions import Self, deprecated
+from typing_extensions import Self
 
 from .container import NonUniqueIdContainer
 from .valkyrie import Valkyrie
-from ..errors import UnknownPartIdError, UnknownValkyrieIdError
-from ..utils import HashableIterable
+from ..errors import (
+    UnknownPartIdError,
+    UnknownPartIdFormatError,
+    UnknownValkyrieIdError,
+)
 
 if sys.version_info <= (3, 15):
     from frozendict import frozendict
 
 
+PartIDFormat = Literal["short", "long", "skin_long", "fragment"]
+
 @dataclass(kw_only=True)
 class Part(NonUniqueIdContainer[Valkyrie]):
-    ids: "HashableIterable[str]"
-
-    id: ClassVar[None] = field(init=False) # pyright: ignore[reportRedeclaration]
     id_length = 3
+    id_format: "PartIDFormat"
 
     def add_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
         return self._add_child(valkyrie)
@@ -35,12 +39,19 @@ class Part(NonUniqueIdContainer[Valkyrie]):
         return valkyrie
 
     @classmethod
-    def by_id(cls, id: str) -> Self:
-        for part in ALL_PARTS:
-            if id in part.ids:
-                return part # pyright: ignore[reportReturnType]
+    def by_format_and_no(cls, id_format: "PartIDFormat", no: int) -> Self:
+        try:
+            return PART_MAP[id_format][no] # pyright: ignore[reportReturnType]
+        except KeyError:
+            raise UnknownPartIdFormatError(id_format, no)
 
-        raise UnknownPartIdError(id)
+    @classmethod
+    def by_id(cls, id: str) -> Self:
+        try:
+            return PARTS_BY_ID[id] # pyright: ignore[reportReturnType]
+        except KeyError:
+            raise UnknownPartIdError(id)
+
 
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
@@ -50,64 +61,23 @@ class Part(NonUniqueIdContainer[Valkyrie]):
     Instead, use the `add_valkyrie` method
     """
 
-    @property
-    @deprecated("Part does not have a single id. Use ids field instead")
-    def id(self) -> None: # pyright: ignore[reportIncompatibleVariableOverride]
-        raise AttributeError("Part does not have a single id. Use ids field instead")
+
+PART_IDS: dict["PartIDFormat", list[str]] = {
+    "short":     ["000", "002"],
+    "long":      ["006", "302"],
+    "skin_long": [   "", "062"],
+    "fragment":  ["001", "202"]
+}
+
+PART_MAP: dict["PartIDFormat", dict[int, Part]] = defaultdict(dict)
+PARTS_BY_ID: dict[str, "Part"] = {}
 
 
-    def __post_init__(self):
-        for id in self.ids:
-            self._validate_id(id)
+def build_part_db():
+    for id_format, ids in PART_IDS.items():
+        for idx, id in enumerate(ids):
+            if id:
+                PART_MAP[id_format][idx+1] = Part(id=id, no=idx+1, id_format=id_format)
+                PARTS_BY_ID[id] = PART_MAP[id_format][idx+1]
 
-        self._add_children_attr()
-
-    def __hash__(self) -> int:
-        return hash((self.ids, self.no))
-
-
-def build_valkyrie_db(
-    part1_valkyries: list[tuple[str, str, int] | tuple[str, str]],
-    part2_valkyries: list[tuple[str, str, int] | tuple[str, str]]
-):
-    # Store range start for each ID
-    range_starts: dict[tuple[str, "Part"], int] = {}
-
-    # Merge raw data preserving the order
-    valkyries = [(part1_valkyries, PART1), (part2_valkyries, PART2)]
-
-    for raw_valkyries, part in valkyries:
-        for raw in raw_valkyries:
-            id:   str = raw[0]
-            name: str = raw[1]
-
-            # Current start is the previous end
-            # Or 0 if current valkyrie is the first one with current ID
-            start = range_starts.get((id, part), 0)
-
-            if len(raw) > 2:
-                end = raw[2]
-
-                valkyrie = Valkyrie(
-                    id=id,
-                    name=name,
-                    children_id_range=range(start, end)
-                )
-            else:
-                valkyrie = Valkyrie(
-                    id=id,
-                    name=name
-                )
-                end = valkyrie.children_id_range.stop
-
-            part.add_valkyrie(valkyrie)
-
-            # Current end is the next start
-            range_starts[(id, part)] = end
-
-
-PART1 = Part(no=1, ids=("000", "006"))
-PART2 = Part(no=2, ids=("002", "062", "202", "302"))
-ALL_PARTS = PART2, PART1
-
-__all__ = ["Part", "PART1", "PART2", "ALL_PARTS", "build_valkyrie_db"]
+__all__ = ["Part", "build_part_db"]

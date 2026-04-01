@@ -1,6 +1,4 @@
-from collections.abc import Hashable, Iterable
 from pathlib import Path
-from typing import Generic, Protocol, TypeVar
 
 from .errors import (
     NonDirectorySourceFolderError,
@@ -8,12 +6,6 @@ from .errors import (
     NonDirectoryOutputFolderError,
     NonEmptyOutputFolderError
 )
-
-
-T = TypeVar("T", covariant=True)
-
-class HashableIterable(Generic[T], Hashable, Iterable[T], Protocol):
-    pass
 
 
 def validate_paths(source_folder: str | Path, output_folder: str | Path = "output"):
@@ -45,6 +37,5 @@ def validate_paths(source_folder: str | Path, output_folder: str | Path = "outpu
 
 
 __all__ = [
-    "validate_paths",
-    "HashableIterable"
+    "validate_paths"
 ]

@@ -61,6 +61,13 @@ class UnknownPartIdError(ParsingError):
 
         super().__init__(f"Unknown part ID {id!r}")
 
+class UnknownPartIdFormatError(ParsingError):
+    def __init__(self, id_format: str, no: int) -> None:
+        self.id_format = id_format
+        self.no = no
+
+        super().__init__(f"Part {no!r} does not have an ID with format {id_format!r}")
+
 
 class UnknownValkyrieIdError(ParsingError):
     def __init__(self, valkyrie_id: str, battlesuit_id: str) -> None:
@@ -119,6 +126,7 @@ __all__ = [
     "EmptyInputStringError",
     "MissingAvatarIdError",
     "UnknownPartIdError",
+    "UnknownPartIdFormatError",
     "UnknownValkyrieIdError",
     "UnknownSkinRarityIdError",
     "TooLongIdError",
