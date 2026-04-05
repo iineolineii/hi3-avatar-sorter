@@ -4,8 +4,8 @@ from typing import ClassVar, TypedDict
 
 from typing_extensions import Self
 
-from .base import BaseModel
 from .battlesuit import Battlesuit
+from .containers import ClassContainer
 from .part import Part
 from .skin import Skin
 from .skin_rarity import SkinRarity
@@ -23,7 +23,7 @@ class RawAvatar(TypedDict):
 
 
 @dataclass(kw_only=True)
-class Avatar(BaseModel):
+class Avatar(ClassContainer[Part]):
     part:        "Part"
     valkyrie:    "Valkyrie"
     battlesuit:  "Battlesuit"
@@ -32,6 +32,32 @@ class Avatar(BaseModel):
     note:        "str        | None" = None
 
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
+
+    # We don't set default value here because this field
+    # will be replaced by _children in ClassContainer.__init_subclass__
+    parts: "ClassVar[frozendict[str, Part]]"
+    """
+    This field should not be updated from outside.
+    Instead, use the `get_part` method
+    """
+
+    @classmethod
+    def add_part(cls, part: "Part") -> "Part":
+        return cls._add_child(part)
+
+    @classmethod
+    def get_part(cls, part_id: str) -> "Part":
+        part = cls._get_child(part_id)
+
+        if part is None:
+            raise UnknownPartIdError(part_id)
+
+        return part
+
+    @classmethod
+    def reserve_part(cls, part: "Part") -> "Part":
+        return cls._reserve_child(part)
+
 
     def reserve(self) -> None:
         # self.reserve_part(self.part)
@@ -79,7 +105,7 @@ class Avatar(BaseModel):
         if note is not None:
             note = str(note)
 
-        part = Part.by_id(part_id)
+        part = cls.get_part(part_id)
         valkyrie = part.get_valkyrie(valkyrie_id, battlesuit_id)
         battlesuit = valkyrie.get_or_add_battlesuit(Battlesuit(id=battlesuit_id))
 

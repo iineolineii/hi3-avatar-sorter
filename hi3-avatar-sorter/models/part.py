@@ -38,21 +38,6 @@ class Part(NonUniqueIdContainer[Valkyrie]):
 
         return valkyrie
 
-    @classmethod
-    def by_format_and_no(cls, id_format: "PartIDFormat", no: int) -> Self:
-        try:
-            return PART_MAP[id_format][no] # pyright: ignore[reportReturnType]
-        except KeyError:
-            raise UnknownPartIdFormatError(id_format, no)
-
-    @classmethod
-    def by_id(cls, id: str) -> Self:
-        try:
-            return PARTS_BY_ID[id] # pyright: ignore[reportReturnType]
-        except KeyError:
-            raise UnknownPartIdError(id)
-
-
     # We don't use default_factory here because this field
     # will be replaced by _children in Container.__post_init__
     valkyries: "frozendict[str, list[Valkyrie]]" = field(default=frozendict())
