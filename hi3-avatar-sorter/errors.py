@@ -1,5 +1,10 @@
+import json
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models.avatar import RawAvatar
 
 
 # NOTE#2: This function is placed here to prevent circular import of utils.py
@@ -92,6 +97,27 @@ class UnknownSkinRarityIdError(ParsingError):
         self.id = id
 
         super().__init__(f"Unknown skin rarity ID {id!r}")
+
+class MissingSkinRarityIdError(ParsingError):
+    def __init__(self, raw_avatar: "RawAvatar") -> None:
+        self.raw_avatar = raw_avatar
+
+        super().__init__(
+            "The following avatar structure contains "
+            "skin_id but is missing skin_rarity_id: "
+            + json.dumps(raw_avatar, indent=4)
+        )
+
+
+class MissingSkinIdError(ParsingError):
+    def __init__(self, raw_avatar: "RawAvatar") -> None:
+        self.raw_avatar = raw_avatar
+
+        super().__init__(
+            "The following avatar structure contains "
+            "skin_rarity_id but is missing skin_id: "
+            + json.dumps(raw_avatar, indent=4)
+        )
 
 
 class TooLongIdError(ParsingError):

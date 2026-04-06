@@ -11,6 +11,8 @@ from ..errors import (
     EmptyInputStringError,
     EmptyNoteError,
     MissingAvatarIdError,
+    MissingSkinIdError,
+    MissingSkinRarityIdError,
     UnknownPartIdError
 )
 from .base import BaseModel
@@ -22,12 +24,13 @@ from .valkyrie import Valkyrie
 
 
 class RawAvatar(TypedDict):
-    part_id:        int | str
-    valkyrie_id:    int | str
-    battlesuit_id:  int | str
-    skin_rarity_id: int | str | None
-    skin_id:        int | str | None
-    note:           int | str | None
+    avatar_id:      str
+    part_id:        str
+    valkyrie_id:    str
+    battlesuit_id:  str
+    skin_rarity_id: str | None
+    skin_id:        str | None
+    note:           str | None
 
 
 class AvatarMeta(ABCMeta):
@@ -42,7 +45,7 @@ class AvatarMeta(ABCMeta):
             )
 
     @parts.setter
-    def self(cls, parts: FrozenContainer[str, Part]):
+    def self(cls, parts: FrozenContainer[str, Part]) -> None:
         cls.__parts = parts
 
 
@@ -58,14 +61,14 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
     @classmethod
-    def get_part(cls, part_id: str):
+    def get_part(cls, part_id: str) -> Part:
         try:
             return cls.parts[part_id]
         except KeyError as e:
             raise UnknownPartIdError(part_id) from e
 
     @classmethod
-    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", Literal[1, 2]]]):
+    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", Literal[1, 2]]]) -> None:
         cls.parts = FrozenContainer({
             id: Part(id=id, no=no, id_format=id_format)
             for id, (id_format, no) in raw_parts.items()
@@ -94,29 +97,24 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     @classmethod
     def from_raw(
         cls,
-        part_id:        int | str,
-        valkyrie_id:    int | str,
-        battlesuit_id:  int | str,
-        skin_rarity_id: int | str | None = None,
-        skin_id:        int | str | None = None,
-        note:           int | str | None = None,
+        avatar_id:      str,
+        part_id:        str,
+        valkyrie_id:    str,
+        battlesuit_id:  str,
+        skin_rarity_id: str | None = None,
+        skin_id:        str | None = None,
+        note:           str | None = None,
         *,
         reserve: bool = False
     ) -> Self:
-        part_id = str(part_id)
-        valkyrie_id = str(valkyrie_id)
-        battlesuit_id = str(battlesuit_id)
-
-        avatar_id = part_id + valkyrie_id + battlesuit_id
-
         if skin_rarity_id is not None:
-            skin_rarity_id = str(skin_rarity_id)
+            skin_rarity_id = skin_rarity_id
 
         if skin_id is not None:
-            skin_id = str(skin_id)
+            skin_id = skin_id
 
         if note is not None:
-            note = str(note)
+            note = note
 
         part = cls.get_part(part_id)
         valkyrie = part.get_valkyrie(valkyrie_id, battlesuit_id)
@@ -171,7 +169,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
 
     @classmethod
-    def raw_from_string(cls, string: str) -> RawAvatar:
+    def raw_from_string(cls, string: str, validate: bool = False) -> RawAvatar:
         if not string:
             raise EmptyInputStringError(string)
 
@@ -219,7 +217,8 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
         battlesuit_id = avatar_id[pos:pos + Battlesuit.id_length]
 
-        return {
+        avatar_raw: RawAvatar = {
+            "avatar_id":      avatar_id,
             "part_id":        part_id,
             "valkyrie_id":    valkyrie_id,
             "battlesuit_id":  battlesuit_id,
@@ -228,9 +227,46 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             "note":           note
         }
 
+        if validate:
+            cls.validate_raw(avatar_raw)
 
-    def __iter__(self) -> Iterator[int | str]:
-        result = (self.part.no, self.valkyrie.id, self.battlesuit.id)
+        return avatar_raw
+
+
+    @classmethod
+    def int_from_string(cls, string: str) -> int:
+        raw_avatar = cls.raw_from_string(string)
+        result = raw_avatar["avatar_id"]
+
+        if raw_avatar["skin_rarity_id"] is not None and raw_avatar["skin_id"] is not None:
+            result += raw_avatar["skin_rarity_id"]
+            result += raw_avatar["skin_id"]
+        else:
+            result += "0000"
+
+        return int(result)
+
+
+    @staticmethod
+    def validate_raw(raw_avatar: RawAvatar):
+        Part.validate_id(raw_avatar["part_id"])
+        Valkyrie.validate_id(raw_avatar["valkyrie_id"])
+        Battlesuit.validate_id(raw_avatar["battlesuit_id"])
+
+        if raw_avatar["skin_rarity_id"] is not None:
+            SkinRarity.validate_id(raw_avatar["skin_rarity_id"])
+
+            if raw_avatar["skin_id"] is not None:
+                Skin.validate_id(raw_avatar["skin_id"])
+            else:
+                raise MissingSkinIdError(raw_avatar)
+
+        elif raw_avatar["skin_id"] is not None:
+            raise MissingSkinRarityIdError(raw_avatar)
+
+
+    def __iter__(self) -> Iterator[str]:
+        result = (str(self.part.no), self.valkyrie.id, self.battlesuit.id)
 
         if self.skin_rarity is not None and self.skin is not None:
             result += (self.skin_rarity.id, self.skin.id)
@@ -241,16 +277,27 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         return iter(result)
 
     def __int__(self) -> int:
-        # Example: 010203_04_05_Special
-        result = f"{int(self.part):02}{int(self.valkyrie):02}{self.battlesuit:02}"
+        # Example: 0102030405 or 0102030000
+        result = f"{self.part.no:02}{self.valkyrie.no:02}{self.battlesuit.no:02}"
 
         if self.skin_rarity is not None and self.skin is not None:
-            result += f", {self.skin_rarity} {self.skin}"
-
-        if self.note:
-            result += f", {self.note}"
+            result += f"_{self.skin_rarity.no:02}_{self.skin.no:02}"
+        else:
+            result += "0000"
 
         return int(result)
+
+    def __repr__(self) -> str:
+        # Example: 010203_04_05_Special
+        result = f"{self.part.no:02}{self.valkyrie.no:02}{self.battlesuit.no:02}"
+
+        if self.skin_rarity is not None and self.skin is not None:
+            result += f"_{self.skin_rarity.no:02}_{self.skin.no:02}"
+
+        if self.note:
+            result += f"_{self.note}"
+
+        return result
 
     def __str__(self) -> str:
         # Example: Raiden Mei №3, Skin 4★ №5, Special
@@ -266,7 +313,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
 
     @property
-    def raw(self):
+    def raw(self) -> RawAvatar:
         try:
             return self.__raw
 

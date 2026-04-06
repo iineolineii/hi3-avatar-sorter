@@ -9,7 +9,7 @@ from .errors import (
 )
 
 
-def validate_paths(source_folder: str | Path, output_folder: str | Path = "output"):
+def validate_paths(source_folder: str | Path, output_folder: str | Path = "output") -> tuple[Path, Path]:
     source_folder = Path(source_folder)
     output_folder = Path(output_folder)
 

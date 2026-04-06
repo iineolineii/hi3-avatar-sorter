@@ -17,7 +17,7 @@ class BaseModel:
         if getattr(cls, "__hash__", None) is None:
             cls.__hash__ = BaseModel.__hash__
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.id = self.validate_id(self.id)
 
     @classmethod

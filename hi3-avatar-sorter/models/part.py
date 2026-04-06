@@ -28,7 +28,7 @@ class Part(BaseModel):
             )
 
     @valkyries.setter
-    def valkyries(self, valkyries: FrozenContainer[str, list[Valkyrie]]):
+    def valkyries(self, valkyries: FrozenContainer[str, list[Valkyrie]]) -> None:
         self.__valkyries = valkyries
 
 
@@ -40,7 +40,7 @@ class Part(BaseModel):
 
         raise UnknownValkyrieIdError(valkyrie_id, battlesuit_id)
 
-    def build_valkyrie_map(self, raw_valkyries: dict[str, tuple[str] | tuple[str, int]]):
+    def build_valkyrie_map(self, raw_valkyries: dict[str, tuple[str] | tuple[str, int]]) -> None:
         # Store range start for each ID
         range_starts: dict[str, int] = {}
 
