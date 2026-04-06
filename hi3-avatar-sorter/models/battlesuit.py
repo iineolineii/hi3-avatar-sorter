@@ -1,31 +1,23 @@
-import sys
 from dataclasses import dataclass, field
 
-from .containers import Container
+from .base import BaseModel
 from .skin_rarity import SkinRarity
-
-if sys.version_info <= (3, 15):
-    from frozendict import frozendict
+from ..containers import MutableContainer
 
 
-@dataclass(kw_only=True)
-class Battlesuit(Container[SkinRarity]):
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__post_init__
-    skin_rarities: "frozendict[str, SkinRarity]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_skin_rarity` method
-    """
+@dataclass
+class Battlesuit(BaseModel):
+    skin_rarities: "MutableContainer[str, SkinRarity]" = field(default_factory=MutableContainer) # pyright: ignore[reportAssignmentType]
 
     def add_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        return self._add_child(skin_rarity)
-
-    def reserve_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        return self._reserve_child(skin_rarity)
+        self.skin_rarities[skin_rarity.id] = skin_rarity
+        return skin_rarity
 
     def get_or_add_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        return self._get_or_add_child(skin_rarity)
+        return self.skin_rarities.get(skin_rarity.id, skin_rarity)
+
+    def reserve_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
+        return self.skin_rarities.reserve(skin_rarity.id, skin_rarity)
 
 
 __all__ = ["Battlesuit"]

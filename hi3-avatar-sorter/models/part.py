@@ -1,68 +1,78 @@
-import sys
 from collections import defaultdict
-from dataclasses import dataclass, field
-from typing import Literal
+from contextlib import suppress
+from dataclasses import dataclass
+from typing import ClassVar
 
-from typing_extensions import Self
-
-from .containers import NonUniqueIdContainer
+from .base import BaseModel
 from .valkyrie import Valkyrie
-from ..errors import (
-    UnknownPartIdError,
-    UnknownPartIdFormatError,
-    UnknownValkyrieIdError,
-)
-
-if sys.version_info <= (3, 15):
-    from frozendict import frozendict
+from .. import PartIDFormat
+from ..containers import FrozenContainer
+from ..errors import UnknownValkyrieIdError
 
 
-PartIDFormat = Literal["short", "long", "skin_long", "fragment"]
-
-@dataclass(kw_only=True)
-class Part(NonUniqueIdContainer[Valkyrie]):
-    id_length = 3
+@dataclass
+class Part(BaseModel):
+    no: int
     id_format: "PartIDFormat"
 
-    def add_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
-        return self._add_child(valkyrie)
+    id_length: ClassVar[int] = 3
 
-    def reserve_valkyrie(self, valkyrie: "Valkyrie") -> "Valkyrie":
-        return self._reserve_child(valkyrie)
+    @property
+    def valkyries(self) -> FrozenContainer[str, list[Valkyrie]]:
+        try:
+            return self.__valkyries
+        except AttributeError:
+            raise AttributeError(
+                f"{type(self).__name__!r} object has no attribute 'valkyries'. "
+                f"Maybe you forgot to call {self.build_valkyrie_map.__qualname__!r}?"
+            )
 
-    def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> "Valkyrie":
-        valkyrie = self._get_child(valkyrie_id, battlesuit_id)
-
-        if valkyrie is None:
-            raise UnknownValkyrieIdError(valkyrie_id, battlesuit_id)
-
-        return valkyrie
-
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__post_init__
-    valkyries: "frozendict[str, list[Valkyrie]]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_valkyrie` method
-    """
+    @valkyries.setter
+    def valkyries(self, valkyries: FrozenContainer[str, list[Valkyrie]]):
+        self.__valkyries = valkyries
 
 
-PART_IDS: dict["PartIDFormat", list[str]] = {
-    "short":     ["000", "002"],
-    "long":      ["006", "302"],
-    "skin_long": [   "", "062"],
-    "fragment":  ["001", "202"]
-}
+    def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> Valkyrie:
+        with suppress(KeyError):
+            for valkyrie in self.valkyries[valkyrie_id]:
+                if battlesuit_id in valkyrie.battlesuit_id_range:
+                    return valkyrie
 
-PART_MAP: dict["PartIDFormat", dict[int, Part]] = defaultdict(dict)
-PARTS_BY_ID: dict[str, "Part"] = {}
+        raise UnknownValkyrieIdError(valkyrie_id, battlesuit_id)
 
+    def build_valkyrie_map(self, raw_valkyries: dict[str, tuple[str] | tuple[str, int]]):
+        # Store range start for each ID
+        range_starts: dict[str, int] = {}
 
-def build_part_map():
-    for id_format, ids in PART_IDS.items():
-        for idx, id in enumerate(ids):
-            if id:
-                PART_MAP[id_format][idx+1] = Part(id=id, no=idx+1, id_format=id_format)
-                PARTS_BY_ID[id] = PART_MAP[id_format][idx+1]
+        valkyrie_map: dict[str, list[Valkyrie]] = defaultdict(list)
 
-__all__ = ["Part", "build_part_map"]
+        for id, raw in raw_valkyries.items():
+            name: str = raw[0]
+
+            # Current start is the previous end
+            # Or 0 if current valkyrie is the first one with current ID
+            start = range_starts.get(id, 0)
+
+            if len(raw) > 1:
+                end = raw[1]
+
+                valkyrie = Valkyrie(
+                    id=id,
+                    name=name,
+                    battlesuit_id_range=range(start, end)
+                )
+            else:
+                valkyrie = Valkyrie(
+                    id=id,
+                    name=name
+                )
+                end = valkyrie.battlesuit_id_range.stop
+
+            valkyrie_map[id].append(valkyrie)
+
+            # Current end is the next start
+            range_starts[id] = end
+
+        self.valkyries = FrozenContainer(valkyrie_map)
+
+__all__ = ["Valkyrie"]

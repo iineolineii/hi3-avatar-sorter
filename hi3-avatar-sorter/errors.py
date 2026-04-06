@@ -1,5 +1,15 @@
+import re
 from pathlib import Path
 
+
+# NOTE#2: This function is placed here to prevent circular import of utils.py
+def snake_case(text: str) -> str:
+    # Source: https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-97.php
+    # License: CC BY 4.0
+    return "_".join(
+        re.sub("([A-Z][a-z]+)", r" \1",
+        re.sub("([A-Z]+)", r" \1",
+        text.replace("-", " "))).split()).lower()
 
 class BaseError(ValueError):
     pass
@@ -100,12 +110,16 @@ class EmptyNoteError(ParsingError):
         super().__init__(f"Note {note!r} is empty or None")
 
 
-class EmptyReservationNoError(ParsingError, AttributeError):
-    def __init__(self, class_name: str, id: str) -> None:
+class MissingReservationAttributeError(ParsingError, AttributeError):
+    def __init__(self, key: str, class_name: str, attr_name: str) -> None:
         self.class_name = class_name
-        self.id = id
+        self.key = key
 
-        super().__init__(f"Reservation No is empty for {class_name!r} ID {id!r}")
+        super().__init__(
+            f"Could not reserve key {key!r}: "
+            f"{class_name!r} object has no {attr_name!r} attribute. "
+            f"Maybe you forgot to call 'get_or_add_{snake_case(attr_name)}'?"
+        )
 
 
 class MissingChildrenAttributeError(ParsingError, AttributeError):
@@ -131,6 +145,6 @@ __all__ = [
     "UnknownSkinRarityIdError",
     "TooLongIdError",
     "EmptyNoteError",
-    "EmptyReservationNoError",
+    "MissingReservationAttributeError",
     "MissingChildrenAttributeError"
 ]

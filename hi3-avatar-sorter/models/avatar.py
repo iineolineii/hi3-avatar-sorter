@@ -1,16 +1,24 @@
-from collections.abc import Iterator
+from abc import ABCMeta
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from typing import ClassVar, TypedDict
+from typing import ClassVar, Literal, TypedDict
 
 from typing_extensions import Self
 
+from .. import PartIDFormat
+from ..containers import FrozenContainer
+from ..errors import (
+    EmptyInputStringError,
+    EmptyNoteError,
+    MissingAvatarIdError,
+    UnknownPartIdError
+)
+from .base import BaseModel
 from .battlesuit import Battlesuit
-from .containers import ClassContainer
 from .part import Part
 from .skin import Skin
 from .skin_rarity import SkinRarity
 from .valkyrie import Valkyrie
-from ..errors import EmptyInputStringError, EmptyNoteError, MissingAvatarIdError
 
 
 class RawAvatar(TypedDict):
@@ -22,8 +30,24 @@ class RawAvatar(TypedDict):
     note:           int | str | None
 
 
-@dataclass(kw_only=True)
-class Avatar(ClassContainer[Part]):
+class AvatarMeta(ABCMeta):
+    @property
+    def parts(cls: type[Avatar]) -> FrozenContainer[str, Part]: # pyright: ignore[reportGeneralTypeIssues]
+        try:
+            return cls.__parts
+        except AttributeError:
+            raise AttributeError(
+                f"type object {cls.__name__!r} has no attribute 'parts'. "
+                f"Maybe you forgot to call {cls.build_part_map.__qualname__!r}?"
+            )
+
+    @parts.setter
+    def self(cls, parts: FrozenContainer[str, Part]):
+        cls.__parts = parts
+
+
+@dataclass
+class Avatar(BaseModel, metaclass=AvatarMeta):
     part:        "Part"
     valkyrie:    "Valkyrie"
     battlesuit:  "Battlesuit"
@@ -33,30 +57,19 @@ class Avatar(ClassContainer[Part]):
 
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
-    # We don't set default value here because this field
-    # will be replaced by _children in ClassContainer.__init_subclass__
-    parts: "ClassVar[frozendict[str, Part]]"
-    """
-    This field should not be updated from outside.
-    Instead, use the `get_part` method
-    """
+    @classmethod
+    def get_part(cls, part_id: str):
+        try:
+            return cls.parts[part_id]
+        except KeyError as e:
+            raise UnknownPartIdError(part_id) from e
 
     @classmethod
-    def add_part(cls, part: "Part") -> "Part":
-        return cls._add_child(part)
-
-    @classmethod
-    def get_part(cls, part_id: str) -> "Part":
-        part = cls._get_child(part_id)
-
-        if part is None:
-            raise UnknownPartIdError(part_id)
-
-        return part
-
-    @classmethod
-    def reserve_part(cls, part: "Part") -> "Part":
-        return cls._reserve_child(part)
+    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", Literal[1, 2]]]):
+        cls.parts = FrozenContainer({
+            id: Part(id=id, no=no, id_format=id_format)
+            for id, (id_format, no) in raw_parts.items()
+        })
 
 
     def reserve(self) -> None:

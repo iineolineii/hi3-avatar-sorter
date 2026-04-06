@@ -1,27 +1,28 @@
-import sys
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from .containers import Container
+from .base import BaseModel
 from .skin import Skin
+from ..containers import MutableContainer
 from ..errors import UnknownSkinRarityIdError
 
-if sys.version_info <= (3, 15):
-    from frozendict import frozendict
 
-
-@dataclass(kw_only=True)
-class SkinRarity(Container[Skin]):
-    # We don't use default_factory here because this field
-    # will be replaced by _children in Container.__post_init__
-    skins: "frozendict[str, Skin]" = field(default=frozendict())
-    """
-    This field should not be updated from outside.
-    Instead, use the `add_skin` method
-    """
-
+@dataclass
+class SkinRarity(BaseModel):
+    skins: "MutableContainer[str, Skin]" = field(default_factory=MutableContainer) # pyright: ignore[reportAssignmentType]
     valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
+
+    def add_skin(self, skin: "Skin") -> "Skin":
+        self.skins[skin.id] = skin
+        return skin
+
+    def get_or_add_skin(self, skin: "Skin") -> "Skin":
+        return self.skins.get(skin.id, skin)
+
+    def reserve_skin(self, skin: "Skin") -> "Skin":
+        return self.skins.reserve(skin.id, skin)
+
 
     @classmethod
     def validate_id(cls, id: str) -> str:
@@ -31,12 +32,6 @@ class SkinRarity(Container[Skin]):
             raise UnknownSkinRarityIdError(id)
 
         return id
-
-    def reserve_skin(self, skin: "Skin") -> "Skin":
-        return self._reserve_child(skin)
-
-    def get_or_add_skin(self, skin: "Skin") -> "Skin":
-        return self._get_or_add_child(skin)
 
     def __int__(self) -> int:
         return int(self.id)

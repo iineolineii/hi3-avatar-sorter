@@ -1,50 +1,67 @@
-PART1_VALKYRIES = [
-    ("01", "Kiana Kaslana",      50 ), # Changed from 10 because of NOTE#1
-    ("01", "Kallen Kaslana",        ),
-    ("02", "Raiden Mei",         10 ),
-    ("02", "Yae Sakura",            ),
-    ("03", "Bronya Zaychik",        ),
-    ("04", "Murata Himeko",      20 ),
-    ("04", "Liliya Olenyeva",    21 ),
-    ("04", "Rozaliya Olenyeva",     ),
-    ("05", "Theresa Apocalypse",    ),
-    ("06", "Fu Hua",                ),
-    ("07", "Rita Rossweisse",    10 ),
-    ("07", "Seele Vollerei",        ),
-    ("08", "Durandal",              ),
-    ("09", "Asuka",                 ),
-    ("20", "Keqing",                ),
-    ("21", "Fischl",                ),
-    ("22", "Elysia",                ),
-    ("23", "Mobius",                ),
-    ("24", "Natasha Cioara",        ),
-    ("25", "Carole Pepper",         ),
-    ("26", "Pardofelis",            ),
-    ("27", "Aponia",                ),
-    ("28", "Eden",                  ),
-    ("29", "Griseo",                ),
-    ("30", "Vill-V",                ),
-    ("31", "Li Sushang",            ),
-    ("32", "Ai Hyperion Λ",         ),
-    ("33", "Susannah Manatt",       ),
-    ("34", "Misteln Schariac",      ),
-    ("35", "PROMETHEUS",            ),
-    ("36", "Shigure Kira",          ),
-    ("37", "Sirin"                  )
-]
+from typing import Literal
 
-PART2_VALKYRIES: list[tuple[str, str] | tuple[str, str, int]] = [
-    ("02", "Senadina",              ),
-    ("03", "Coralie 6626 Planck",   ),
-    ("04", "Erdős Helia",           ),
-    ("05", "Thelema Nutriscu",      ),
-    ("06", "«Lantern»",             ),
-    ("07", "Songque",               ),
-    ("08", "Vita",                  ),
-    ("09", "Sparkle"                )
-]
+
+PartIDFormat = Literal["short", "long", "skin_long", "fragment"]
+
+RAW_PARTS: dict[str, tuple["PartIDFormat", Literal[1, 2]]] = {
+    "000": ("short",     1),
+    "002": ("short",     2),
+    "006": ("long",      1),
+    "302": ("long",      2),
+    # ...: ("skin_long", 1), # Unused because Part 1 avatars do not have distinct long skin format
+    "062": ("skin_long", 2),
+    "001": ("fragment",  1),
+    "202": ("fragment",  2)
+}
+
+
+RAW_PART1_VALKYRIES: dict[str, tuple[str] | tuple[str, int]] = {
+    "01": ("Kiana Kaslana",      50), # Changed from 10 because of NOTE#
+    "01": ("Kallen Kaslana",       ),
+    "02": ("Raiden Mei",         10),
+    "02": ("Yae Sakura",           ),
+    "03": ("Bronya Zaychik",       ),
+    "04": ("Murata Himeko",      20),
+    "04": ("Liliya Olenyeva",    21),
+    "04": ("Rozaliya Olenyeva",    ),
+    "05": ("Theresa Apocalypse",   ),
+    "06": ("Fu Hua",               ),
+    "07": ("Rita Rossweisse",    10),
+    "07": ("Seele Vollerei",       ),
+    "08": ("Durandal",             ),
+    "09": ("Asuka",                ),
+    "20": ("Keqing",               ),
+    "21": ("Fischl",               ),
+    "22": ("Elysia",               ),
+    "23": ("Mobius",               ),
+    "24": ("Natasha Cioara",       ),
+    "25": ("Carole Pepper",        ),
+    "26": ("Pardofelis",           ),
+    "27": ("Aponia",               ),
+    "28": ("Eden",                 ),
+    "29": ("Griseo",               ),
+    "30": ("Vill-V",               ),
+    "31": ("Li Sushang",           ),
+    "32": ("Ai Hyperion Λ",        ),
+    "33": ("Susannah Manatt",      ),
+    "34": ("Misteln Schariac",     ),
+    "35": ("PROMETHEUS",           ),
+    "36": ("Shigure Kira",         ),
+    "37": ("Sirin",                )
+}
+
+RAW_PART2_VALKYRIES: dict[str, tuple[str] | tuple[str, int]] = {
+    "02": ("Senadina",             ),
+    "03": ("Coralie 6626 Planck",  ),
+    "04": ("Erdős Helia",          ),
+    "05": ("Thelema Nutriscu",     ),
+    "06": ("«Lantern»",            ),
+    "07": ("Songque",              ),
+    "08": ("Vita",                 ),
+    "09": ("Sparkle",              )
+}
 
 
 __vesrion__ = (0, 0, 1)
 
-__all__ = ["PART1_VALKYRIES", "PART2_VALKYRIES", "__vesrion__"]
+__all__ = ["PartIDFormat", "RAW_PARTS", "RAW_PART1_VALKYRIES", "RAW_PART2_VALKYRIES", "__vesrion__"]

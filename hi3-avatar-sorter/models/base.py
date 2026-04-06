@@ -4,11 +4,11 @@ from typing import ClassVar
 from ..errors import TooLongIdError
 
 
-@dataclass(kw_only=True)
+@dataclass
 class BaseModel:
     id: str
 
-    no: int = field(default=None) # pyright: ignore[reportAssignmentType]
+    no: int = field(init=False)
     id_length: ClassVar[int] = 2
 
     def __init_subclass__(cls) -> None:
@@ -39,9 +39,4 @@ class BaseModel:
         return hash((self.id, self.no))
 
 
-@dataclass(kw_only=True)
-class NonUniqueIdModel(BaseModel):
-    children_id_range: range = field(default=range(0, 100))
-
-
-__all__ = ["BaseModel", "NonUniqueIdModel"]
+__all__ = ["BaseModel"]

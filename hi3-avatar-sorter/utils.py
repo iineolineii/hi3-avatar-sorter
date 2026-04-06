@@ -4,7 +4,8 @@ from .errors import (
     NonDirectorySourceFolderError,
     EmptySourceFolderError,
     NonDirectoryOutputFolderError,
-    NonEmptyOutputFolderError
+    NonEmptyOutputFolderError,
+    snake_case # Imported because of NOTE#2
 )
 
 
@@ -37,5 +38,6 @@ def validate_paths(source_folder: str | Path, output_folder: str | Path = "outpu
 
 
 __all__ = [
-    "validate_paths"
+    "validate_paths",
+    "snake_case"
 ]
