@@ -87,12 +87,10 @@ class MutableContainer(Generic["K", "V"], MexContainer["K", "V"], dict["K", "V"]
 
         return self[key]
 
-    def __setitem__(self, key: "K", value: "V") -> "V":
+    def __setitem__(self, key: "K", value: "V") -> None:
         mex = self.consume_mex()
         setattr(value, self.mex_attr_name, mex)
         self.map[key] = value
-
-        return value
 
 
 __all__ = ["MutableContainer"]
