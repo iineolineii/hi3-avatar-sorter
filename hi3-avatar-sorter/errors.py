@@ -3,7 +3,6 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from . import PartIDFormat
     from .models import Part
@@ -15,7 +14,8 @@ def snake_case(text: str) -> str:
     # Source: https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-97.php
     # License: CC BY 4.0
     return "_".join(
-        re.sub("([A-Z][a-z]+)", r" \1",
+        re.sub("([A-Z][a-z]+)",
+        r" \1",
         re.sub("([A-Z]+)", r" \1",
         text.replace("-", " "))).split()).lower()
 
@@ -141,7 +141,19 @@ class TooLongIdError(ParsingError):
         self.max_length = max_length
         self.class_name = class_name
 
-        super().__init__(f"ID {id!r} is too long: it's length {len(id)!r} exceeds the maximum {max_length!r} for class {class_name!r}")
+        super().__init__(
+            f"ID {id!r} is too long: "
+            f"its length {len(id)!r} exceeds the maximum "
+            f"{max_length!r} for class {class_name!r}"
+        )
+
+class NonNumericIdError(ParsingError):
+    def __init__(self, id: str, class_name: str) -> None:
+        super().__init__(
+            f"ID {id!r} is not numeric: "
+            f"it contains non-digit characters "
+            f"and is invalid for class {class_name!r}"
+        )
 
 
 class EmptyNoteError(ParsingError):
@@ -163,13 +175,6 @@ class MissingReservationAttributeError(ParsingError, AttributeError):
         )
 
 
-class MissingChildrenAttributeError(ParsingError, AttributeError):
-    def __init__(self, class_name: str) -> None:
-        self.class_name = class_name
-
-        super().__init__(f"Children attribute is missing for {class_name!r}")
-
-
 __all__ = [
     "BaseError",
     "PathError",
@@ -181,10 +186,13 @@ __all__ = [
     "EmptyInputStringError",
     "MissingAvatarIdError",
     "UnknownPartIdError",
+    "UnknownPartNoError",
+    "AmbiguousPartNoError",
     "UnknownValkyrieIdError",
     "UnknownSkinRarityIdError",
+    "MissingSkinRarityIdError",
+    "MissingSkinIdError",
     "TooLongIdError",
     "EmptyNoteError",
-    "MissingReservationAttributeError",
-    "MissingChildrenAttributeError"
+    "MissingReservationAttributeError"
 ]

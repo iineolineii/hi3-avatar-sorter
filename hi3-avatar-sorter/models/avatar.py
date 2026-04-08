@@ -6,6 +6,12 @@ from typing import ClassVar, Literal, TypedDict, overload
 
 from typing_extensions import Self
 
+from .base import BaseModel
+from .battlesuit import Battlesuit
+from .part import Part
+from .skin import Skin
+from .skin_rarity import SkinRarity
+from .valkyrie import Valkyrie
 from .. import PartIDFormat
 from ..containers import FrozenContainer
 from ..errors import (
@@ -16,14 +22,8 @@ from ..errors import (
     MissingSkinIdError,
     MissingSkinRarityIdError,
     UnknownPartIdError,
-    UnknownPartNoError
+    UnknownPartNoError,
 )
-from .base import BaseModel
-from .battlesuit import Battlesuit
-from .part import Part
-from .skin import Skin
-from .skin_rarity import SkinRarity
-from .valkyrie import Valkyrie
 
 
 class RawAvatar(TypedDict):
@@ -126,12 +126,9 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             self.skin_rarity.reserve_skin(self.skin)
 
     @classmethod
-    def from_string(cls, string: str, *, reserve: bool = False) -> Self:
+    def from_string(cls, string: str) -> Self:
         raw_avatar = cls.raw_from_string(string)
         self = cls.from_raw(**raw_avatar)
-
-        if reserve:
-            self.reserve()
 
         return self
 
@@ -144,9 +141,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         battlesuit_id:  str,
         skin_rarity_id: str | None = None,
         skin_id:        str | None = None,
-        note:           str | None = None,
-        *,
-        reserve: bool = False
+        note:           str | None = None
     ) -> Self:
         if skin_rarity_id is not None:
             skin_rarity_id = skin_rarity_id
@@ -190,9 +185,6 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             "skin_id":        skin_id,
             "note":           note
         }
-
-        if reserve:
-            self.reserve()
 
         return self
 
@@ -276,7 +268,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
     @classmethod
     def int_from_string(cls, string: str) -> int:
-        raw_avatar = cls.raw_from_string(string)
+        raw_avatar = cls.raw_from_string(string, validate=True)
         result = raw_avatar["avatar_id"]
 
         if raw_avatar["skin_rarity_id"] is not None and raw_avatar["skin_id"] is not None:

@@ -8,7 +8,7 @@ RAW_PARTS: dict[str, tuple["PartIDFormat", Literal[1, 2]]] = {
     "002": ("short",     2),
     "006": ("long",      1),
     "302": ("long",      2),
-    # ...: ("skin_long", 1), # Unused because Part 1 avatars do not have distinct long skin format
+    # ...: ("skin_long", 1), # NOTE#3 Unused because Part 1 avatars do not have distinct long skin format
     "062": ("skin_long", 2),
     "001": ("fragment",  1),
     "202": ("fragment",  2)
@@ -16,7 +16,7 @@ RAW_PARTS: dict[str, tuple["PartIDFormat", Literal[1, 2]]] = {
 
 
 RAW_PART1_VALKYRIES: dict[str, tuple[str] | tuple[str, int]] = {
-    "01": ("Kiana Kaslana",      50), # Changed from 10 because of NOTE#
+    "01": ("Kiana Kaslana",      50), # Changed from 10 because of NOTE#1
     "01": ("Kallen Kaslana",       ),
     "02": ("Raiden Mei",         10),
     "02": ("Yae Sakura",           ),

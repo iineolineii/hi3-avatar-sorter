@@ -1,11 +1,11 @@
 from pathlib import Path
 
+from .errors import snake_case  # Imported because of NOTE#2
 from .errors import (
-    NonDirectorySourceFolderError,
     EmptySourceFolderError,
     NonDirectoryOutputFolderError,
+    NonDirectorySourceFolderError,
     NonEmptyOutputFolderError,
-    snake_case # Imported because of NOTE#2
 )
 
 

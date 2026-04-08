@@ -1,6 +1,7 @@
 from collections import defaultdict
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import ClassVar
 
 from .base import BaseModel
@@ -12,7 +13,7 @@ from ..errors import UnknownValkyrieIdError
 
 @dataclass
 class Part(BaseModel):
-    no: int
+    no: int = field(init=True)
     id_format: "PartIDFormat"
 
     id_length: ClassVar[int] = 3
