@@ -1,19 +1,22 @@
 from abc import ABCMeta
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from typing import ClassVar, Literal, TypedDict
+from functools import lru_cache
+from typing import ClassVar, Literal, TypedDict, overload
 
 from typing_extensions import Self
 
 from .. import PartIDFormat
 from ..containers import FrozenContainer
 from ..errors import (
+    AmbiguousPartNoError,
     EmptyInputStringError,
     EmptyNoteError,
     MissingAvatarIdError,
     MissingSkinIdError,
     MissingSkinRarityIdError,
-    UnknownPartIdError
+    UnknownPartIdError,
+    UnknownPartNoError
 )
 from .base import BaseModel
 from .battlesuit import Battlesuit
@@ -60,12 +63,50 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
+    @overload
     @classmethod
-    def get_part(cls, part_id: str) -> Part:
+    def get_part(cls, part_id: str, /) -> Part: ...
+
+    @overload
+    @classmethod
+    def get_part(cls, part_no: int, part_id_format: "PartIDFormat", /) -> Part: ...
+
+    @lru_cache
+    # NOTE#4: Using cache is beneficial only when
+    # the result is computed using loops
+    # and the children container is immutable.
+    # Otherwise it may produce stale or misleading results.
+    @classmethod
+    def get_part(cls, part_no_or_id: int | str, part_id_format: "PartIDFormat | None" = None, /) -> Part:
+        if part_id_format is None:
+            part_id: str = part_no_or_id # pyright: ignore[reportAssignmentType]
+            return cls._get_part_by_id(part_id)
+
+        part_no: int = part_no_or_id # pyright: ignore[reportAssignmentType]
+        return cls._get_part_by_no(part_no, part_id_format)
+
+    @classmethod
+    def _get_part_by_id(cls, part_id: str) -> Part:
         try:
             return cls.parts[part_id]
         except KeyError as e:
             raise UnknownPartIdError(part_id) from e
+
+    @classmethod
+    def _get_part_by_no(cls, part_no: int, part_id_format: "PartIDFormat") -> Part:
+        found: list[Part] = [
+            part
+            for part in cls.parts.values()
+            if part.no == part_no and part.id_format == part_id_format
+        ]
+
+        if len(found) == 1:
+            return found[0]
+
+        if not found:
+            raise UnknownPartNoError(part_no, part_id_format)
+
+        raise AmbiguousPartNoError(part_no, part_id_format, found)
 
     @classmethod
     def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", Literal[1, 2]]]) -> None:

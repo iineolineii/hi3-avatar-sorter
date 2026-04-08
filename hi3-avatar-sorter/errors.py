@@ -3,7 +3,10 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
+    from . import PartIDFormat
+    from .models import Part
     from .models.avatar import RawAvatar
 
 
@@ -76,12 +79,24 @@ class UnknownPartIdError(ParsingError):
 
         super().__init__(f"Unknown part ID {id!r}")
 
-class UnknownPartIdFormatError(ParsingError):
-    def __init__(self, id_format: str, no: int) -> None:
-        self.id_format = id_format
+class UnknownPartNoError(ParsingError):
+    def __init__(self, no: int, id_format: "PartIDFormat") -> None:
         self.no = no
+        self.id_format = id_format
 
-        super().__init__(f"Part {no!r} does not have an ID with format {id_format!r}")
+        super().__init__(f"Unknown part with no {no!r} and ID format {id_format!r}")
+
+class AmbiguousPartNoError(ParsingError):
+    def __init__(self, no: int, id_format: "PartIDFormat", candidates: list["Part"]) -> None:
+        self.no = no
+        self.id_format = id_format
+        self.candidates = candidates
+
+        super().__init__(
+            f"Multiple parts with no {no!r} and "
+            f"ID format {id_format!r} were found: {candidates!r}. "
+            f"Maybe your part map contains duplicates?"
+        )
 
 
 class UnknownValkyrieIdError(ParsingError):
@@ -166,7 +181,6 @@ __all__ = [
     "EmptyInputStringError",
     "MissingAvatarIdError",
     "UnknownPartIdError",
-    "UnknownPartIdFormatError",
     "UnknownValkyrieIdError",
     "UnknownSkinRarityIdError",
     "TooLongIdError",
