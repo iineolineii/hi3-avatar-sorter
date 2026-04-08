@@ -31,7 +31,7 @@ class Part(BaseModel):
     def valkyries(self, valkyries: FrozenContainer[str, list[Valkyrie]]) -> None:
         self.__valkyries = valkyries
 
-
+    @lru_cache # Add caching according to NOTE#4
     def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> Valkyrie:
         with suppress(KeyError):
             for valkyrie in self.valkyries[valkyrie_id]:
