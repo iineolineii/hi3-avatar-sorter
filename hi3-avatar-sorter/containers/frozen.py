@@ -35,7 +35,7 @@ class FrozenContainer(Generic["K", "V"], MexContainer["K", "V"]):
                 All values passed here will be reserved via the `reserve()` method.
                 Each of these values must have an attribute with the specified in `mex_attr_name` argument.
 
-            mex_attr_name (`str`):
+            mex_attr_name (`str`, *optional*):
                 Name of the values' attribute used as a MEX. Defaults to `"no"`.
         """
         super().__init__(map, mex_attr_name)

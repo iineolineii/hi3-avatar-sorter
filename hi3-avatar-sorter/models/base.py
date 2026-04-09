@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-from ..errors import NonNumericIdError, TooLongIdError
+from ..errors import NonNumericIDError, TooLongIDError
 
 
 @dataclass
@@ -25,10 +25,10 @@ class BaseModel:
         id = id.rjust(cls.id_length, "0")
 
         if len(id) > cls.id_length:
-            raise TooLongIdError(id, cls.id_length, cls.__name__)
+            raise TooLongIDError(id, cls.id_length, cls.__name__)
 
         if not id.isnumeric():
-            raise NonNumericIdError(id, cls.__name__)
+            raise NonNumericIDError(id, cls.__name__)
 
         return id
 

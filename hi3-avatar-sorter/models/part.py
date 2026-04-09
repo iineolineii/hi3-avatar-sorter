@@ -8,7 +8,7 @@ from .base import BaseModel
 from .valkyrie import Valkyrie
 from .. import PartIDFormat
 from ..containers import FrozenContainer
-from ..errors import UnknownValkyrieIdError
+from ..errors import UnknownValkyrieIDError
 
 
 @dataclass
@@ -39,7 +39,7 @@ class Part(BaseModel):
                 if battlesuit_id in valkyrie.battlesuit_id_range:
                     return valkyrie
 
-        raise UnknownValkyrieIdError(valkyrie_id, battlesuit_id)
+        raise UnknownValkyrieIDError(valkyrie_id, battlesuit_id)
 
     def build_valkyrie_map(self, raw_valkyries: dict[str, tuple[str] | tuple[str, int]]) -> None:
         # Store range start for each ID

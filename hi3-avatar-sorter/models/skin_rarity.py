@@ -5,7 +5,7 @@ from typing import ClassVar
 from .base import BaseModel
 from .skin import Skin
 from ..containers import MutableContainer
-from ..errors import UnknownSkinRarityIdError
+from ..errors import UnknownSkinRarityIDError
 
 
 @dataclass
@@ -29,7 +29,7 @@ class SkinRarity(BaseModel):
         id = super().validate_id(id)
 
         if id not in cls.valid_ids:
-            raise UnknownSkinRarityIdError(id)
+            raise UnknownSkinRarityIDError(id)
 
         return id
 
