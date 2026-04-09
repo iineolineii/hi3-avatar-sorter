@@ -222,4 +222,16 @@ class RawAvatar:
         return skin_rarity_id, skin_id, note # pyright: ignore[reportReturnType]
 
 
+    def __int__(self):
+        result = self.id
+
+        if self.skin_rarity_id is not None and self.skin_id is not None:
+            result += self.skin_rarity_id
+            result += self.skin_id
+        else:
+            result += "0000"
+
+        return int(result)
+
+
 __all__ = ["RawAvatar"]
