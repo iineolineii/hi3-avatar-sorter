@@ -2,7 +2,6 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Generic
 
 from .mex import MexContainer
-from ..errors import MissingReservationAttributeError
 
 if TYPE_CHECKING:
    from . import K, V
@@ -39,7 +38,7 @@ class MutableContainer(Generic["K", "V"], MexContainer["K", "V"], dict["K", "V"]
             mex = getattr(value, self.mex_attr_name)
             self.reserve(key, value, mex)
 
-    def reserve(self, key: "K", value: "V", mex: int = ...) -> "V": # pyright: ignore[reportArgumentType]
+    def reserve(self, key: "K", value: "V", mex: int) -> "V": # pyright: ignore[reportArgumentType]
         """
         Reserve a value with a predefined MEX.
 
@@ -51,17 +50,11 @@ class MutableContainer(Generic["K", "V"], MexContainer["K", "V"], dict["K", "V"]
                 Value to store.
 
             mex (`int`):
-                Predefined MEX. Defaults to `getattr(value, self.mex_attr_name)` (which defaults to `value.no`)
+                Predefined MEX.
 
         Returns:
             `V`: The inserted value.
         """
-        if mex is ...:
-            if getattr(value, self.mex_attr_name, None) is None:
-                raise MissingReservationAttributeError(key, type(value).__name__)
-
-            mex = getattr(value, self.mex_attr_name)
-
         self.current_mex = mex
         self.update_mex()
         self[key] = value

@@ -17,7 +17,7 @@ class Battlesuit(BaseModel):
         return self.skin_rarities.get(skin_rarity.id, skin_rarity)
 
     def reserve_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        return self.skin_rarities.reserve(skin_rarity.id, skin_rarity)
+        return self.skin_rarities.reserve(skin_rarity.id, skin_rarity, int(skin_rarity.id))
 
 
 __all__ = ["Battlesuit"]

@@ -21,7 +21,7 @@ class SkinRarity(BaseModel):
         return self.skins.get(skin.id, skin)
 
     def reserve_skin(self, skin: "Skin") -> "Skin":
-        return self.skins.reserve(skin.id, skin)
+        return self.skins.reserve(skin.id, skin, int(skin.id))
 
 
     @classmethod
