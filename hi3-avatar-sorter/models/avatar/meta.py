@@ -15,16 +15,23 @@ class AvatarMeta(ABCMeta):
     @property
     def parts(cls: type["Avatar"]) -> "frozendict[str, Part]": # pyright: ignore[reportGeneralTypeIssues]
         try:
-            return cls.__parts_by_id
+            return cls.__part_by_id
         except AttributeError:
             raise AttributeError(
-                f"type object {cls.__name__!r} has no attribute 'parts'. "
+                f"type object {cls.__name__!r} has no attribute '{AvatarMeta.parts.__name__!r}'. "
                 f"Maybe you forgot to call {cls.build_part_map.__qualname__!r}?"
             )
 
-    @parts.setter
-    def self(cls: type["Avatar"], parts: FrozenContainer[str, Part]) -> None: # pyright: ignore[reportGeneralTypeIssues]
-        cls.__parts = parts
+
+    @property
+    def part_by_no(cls: type["Avatar"]) -> "frozendict[tuple[int, PartIDFormat], Part]": # pyright: ignore[reportGeneralTypeIssues]
+        try:
+            return cls.__part_by_no
+        except AttributeError:
+            raise AttributeError(
+                f"type object {cls.__name__!r} has no attribute '{AvatarMeta.parts.__name__!r}'. "
+                f"Maybe you forgot to call {cls.build_part_map.__qualname__!r}?"
+            )
 
 
 __all__ = ["AvatarMeta"]

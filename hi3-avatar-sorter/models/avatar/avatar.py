@@ -1,7 +1,8 @@
+import sys
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import ClassVar, Literal, Self, overload
+from typing import ClassVar, Self, overload
 
 from .meta import AvatarMeta
 from .raw import RawAvatar
@@ -11,14 +12,16 @@ from ..part import Part
 from ..skin import Skin
 from ..skin_rarity import SkinRarity
 from ..valkyrie import Valkyrie
-from ... import PartIDFormat
-from ...containers import FrozenContainer
+from ... import PartIDFormat, PartNumbers
 from ...errors import (
-    AmbiguousPartNoError,
+    DuplicatePartNoError,
     EmptyNoteError,
     UnknownPartIDError,
     UnknownPartNoError
 )
+
+if sys.version_info < (3, 15):
+    from frozendict import frozendict
 
 
 @dataclass
@@ -104,34 +107,35 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
     @classmethod
     def _get_part_by_no(cls, part_no: int, part_id_format: PartIDFormat) -> Part:
-        found = [
-            part
-            for part in cls.parts.values()
-            if part.no == part_no and part.id_format == part_id_format
-        ]
-
-        if len(found) == 1:
-            return found[0]
-
-        if not found:
-            raise UnknownPartNoError(part_no, part_id_format)
-
-        raise AmbiguousPartNoError(part_no, part_id_format, found)
+        try:
+            return cls.part_by_no[(part_no, part_id_format)]
+        except KeyError as e:
+            raise UnknownPartNoError(part_no, part_id_format) from e
 
 
     @classmethod
-    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", Literal[1, 2]]]) -> None:
+    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", "PartNumbers"]]) -> None:
         """
         Initialize the class-level Part map from raw Part data.
 
         Args:
-            raw_parts (`dict[str, tuple[PartIDFormat, Literal[1, 2]]]`):
-                Mapping from Part ID to a tuple of (ID format, Part number).
+            raw_parts (`dict[str, tuple[PartIDFormat, PartNumbers]]`):
+                Mapping from Part ID to a tuple of (Part ID format, Part number).
         """
-        cls.parts = FrozenContainer({
-            pid: Part(id=pid, no=no, id_format=fmt)
-            for pid, (fmt, no) in raw_parts.items()
-        })
+        part_by_id: dict[str, Part] = {}
+        part_by_no: dict[tuple["PartIDFormat", "PartNumbers"], Part] = {}
+
+        for id, (id_format, no) in raw_parts.items():
+            part = Part(id=id, no=no, id_format=id_format)
+            part_by_id[id] = part
+
+            if (id_format, no) in part_by_no:
+                raise DuplicatePartNoError(no, id_format, raw_parts)
+
+            part_by_no[(id_format, no)] = part
+
+        cls.__part_by_id = frozendict(part_by_id)
+        cls.__part_by_no = frozendict(part_by_no)
 
 
     def reserve(self) -> None:

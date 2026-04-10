@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from . import PartIDFormat
-    from .models import Part
+    from . import PartIDFormat, PartNumbers
 
 
 # NOTE#2: This function is placed here to prevent circular import of utils.py
@@ -138,17 +137,23 @@ class TooLongSuffixError(ParsingError):
         )
 
 
-class AmbiguousPartNoError(ParsingError):
-    def __init__(self, no: int, id_format: "PartIDFormat", candidates: list["Part"]) -> None:
+class DuplicatePartNoError(ParsingError):
+    def __init__(
+        self,
+        no: int,
+        id_format: "PartIDFormat",
+        raw_parts: dict[str, tuple["PartIDFormat", "PartNumbers"]],
+    ) -> None:
         self.no = no
         self.id_format = id_format
-        self.candidates = candidates
+        self.raw_parts = raw_parts
 
         super().__init__(
-            f"Multiple parts with no {no!r} and "
-            f"ID format {id_format!r} were found: {candidates!r}. "
-            f"Maybe your Part map contains duplicates?"
+            f"Raw part map contains multiple parts with "
+            f"number {no!r} and ID format {id_format!r}: "
+            + json.dumps(raw_parts, indent=4)
         )
+
 
 class UnknownPartIDError(ParsingError):
     def __init__(self, id: str) -> None:
@@ -161,7 +166,7 @@ class UnknownPartNoError(ParsingError):
         self.no = no
         self.id_format = id_format
 
-        super().__init__(f"Unknown Part with no {no!r} and ID format {id_format!r}")
+        super().__init__(f"Unknown Part with number {no!r} and ID format {id_format!r}")
 
 class UnknownValkyrieIDError(ParsingError):
     def __init__(self, valkyrie_id: str, battlesuit_id: str) -> None:
