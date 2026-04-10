@@ -31,10 +31,6 @@ class Part(BaseModel):
                 f"Maybe you forgot to call {self.build_valkyrie_map.__qualname__!r}?"
             )
 
-    @valkyries.setter
-    def valkyries(self, valkyries: frozendict[str, list[Valkyrie]]) -> None:
-        self.__valkyries = valkyries
-
     @lru_cache # Add caching according to NOTE#4
     def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> Valkyrie:
         with suppress(KeyError):
@@ -77,6 +73,6 @@ class Part(BaseModel):
             # Current end is the next start
             range_starts[id] = end
 
-        self.valkyries = frozendict(valkyrie_map)
+        self.__valkyries = frozendict(valkyrie_map)
 
 __all__ = ["Valkyrie"]
