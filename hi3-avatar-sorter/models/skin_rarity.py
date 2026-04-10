@@ -4,13 +4,13 @@ from typing import ClassVar
 
 from .base import BaseModel
 from .skin import Skin
-from ..containers import MutableContainer
+from ..mex_container import MexContainer
 from ..errors import UnknownSkinRarityIDError
 
 
 @dataclass
 class SkinRarity(BaseModel):
-    skins: "MutableContainer[str, Skin]" = field(default_factory=MutableContainer) # pyright: ignore[reportAssignmentType]
+    skins: "MexContainer[str, Skin]" = field(default_factory=MexContainer) # pyright: ignore[reportAssignmentType]
     valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
 
     def add_skin(self, skin: "Skin") -> "Skin":

@@ -38,7 +38,6 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     note: str | None = None
 
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
-    parts: ClassVar[FrozenContainer[str, Part]]
 
     @overload
     @classmethod

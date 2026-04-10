@@ -1,15 +1,14 @@
-from collections.abc import Mapping
-from typing import TYPE_CHECKING, Generic
+from abc import ABCMeta
+from collections.abc import Hashable, Iterator, Mapping
+from typing import Generic, TypeVar
 
-from .mex import MexContainer
-
-if TYPE_CHECKING:
-   from . import K, V
+K = TypeVar("K", bound=Hashable)
+V = TypeVar("V")
 
 
-class MutableContainer(Generic["K", "V"], MexContainer["K", "V"], dict["K", "V"]):
+class MexContainer(Generic["K", "V"], Mapping["K", "V"], metaclass=ABCMeta):
     """
-    A mutable implementation of the MEX container allowing value assignment.
+    Base container that stores values based on their MEX (minimal excluded number).
     """
 
     def __init__(
@@ -27,8 +26,41 @@ class MutableContainer(Generic["K", "V"], MexContainer["K", "V"], dict["K", "V"]
             mex_attr_name (`str`):
                 Name of the values' attribute used as a MEX. Defaults to `"no"`.
         """
-        super().__init__(map, mex_attr_name)
+        super().__init__()
+
+        self.mex_attr_name = mex_attr_name
+        """
+        mex_attr_name (`str`):
+            Name of the values' attribute used as a MEX. Defaults to `"no"`.
+        """
+        self.map: dict["K", "V"] = map
+        """
+        map (`dict["K", "V"]`):
+            Internal container.
+        """
         self.reserve_map(self.map)
+        self.consumed_mexes: set[int] = set()
+        self.current_mex = 0
+
+    def consume_mex(self) -> int:
+        """
+        Mark current MEX as consumed.
+
+        Returns:
+            `int`: The current MEX value.
+        """
+        mex = self.current_mex
+        self.consumed_mexes.add(mex)
+        self.update_mex()
+
+        return mex
+
+    def update_mex(self) -> None:
+        """
+        Increments `current_mex` until it is no longer present in `consumed_mexes`.
+        """
+        while self.current_mex in self.consumed_mexes:
+            self.current_mex += 1
 
     def reserve_map(self, map: Mapping["K", "V"]) -> None:
         """
@@ -85,5 +117,14 @@ class MutableContainer(Generic["K", "V"], MexContainer["K", "V"], dict["K", "V"]
         setattr(value, self.mex_attr_name, mex)
         self.map[key] = value
 
+    def __getitem__(self, key: "K") -> "V":
+        return self.map[key]
 
-__all__ = ["MutableContainer"]
+    def __len__(self) -> int:
+        return len(self.map)
+
+    def __iter__(self) -> Iterator["K"]:
+        return iter(self.map)
+
+
+__all__ = ["MexContainer"]

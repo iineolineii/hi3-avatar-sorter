@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from contextlib import suppress
 from dataclasses import dataclass, field
@@ -7,8 +8,10 @@ from typing import ClassVar
 from .base import BaseModel
 from .valkyrie import Valkyrie
 from .. import PartIDFormat
-from ..containers import FrozenContainer
 from ..errors import UnknownValkyrieIDError
+
+if sys.version_info < (3, 15):
+    from frozendict import frozendict
 
 
 @dataclass
@@ -19,7 +22,7 @@ class Part(BaseModel):
     id_length: ClassVar[int] = 3
 
     @property
-    def valkyries(self) -> FrozenContainer[str, list[Valkyrie]]:
+    def valkyries(self) -> frozendict[str, list[Valkyrie]]:
         try:
             return self.__valkyries
         except AttributeError:
@@ -29,7 +32,7 @@ class Part(BaseModel):
             )
 
     @valkyries.setter
-    def valkyries(self, valkyries: FrozenContainer[str, list[Valkyrie]]) -> None:
+    def valkyries(self, valkyries: frozendict[str, list[Valkyrie]]) -> None:
         self.__valkyries = valkyries
 
     @lru_cache # Add caching according to NOTE#4
@@ -74,6 +77,6 @@ class Part(BaseModel):
             # Current end is the next start
             range_starts[id] = end
 
-        self.valkyries = FrozenContainer(valkyrie_map)
+        self.valkyries = frozendict(valkyrie_map)
 
 __all__ = ["Valkyrie"]

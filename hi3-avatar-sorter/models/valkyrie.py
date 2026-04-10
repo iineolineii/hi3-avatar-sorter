@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 
 from .base import BaseModel
 from .battlesuit import Battlesuit
-from ..containers import MutableContainer
+from ..mex_container import MexContainer
 
 
 @dataclass
 class Valkyrie(BaseModel):
     name: str
-    battlesuits: "MutableContainer[str, Battlesuit]" = field(default_factory=MutableContainer) # pyright: ignore[reportAssignmentType]
+    battlesuits: "MexContainer[str, Battlesuit]" = field(default_factory=MexContainer) # pyright: ignore[reportAssignmentType]
     battlesuit_id_range: range = field(default=range(0, 100))
 
     def add_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
