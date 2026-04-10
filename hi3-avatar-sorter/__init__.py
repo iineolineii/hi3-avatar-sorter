@@ -2,8 +2,9 @@ from typing import Literal
 
 
 PartIDFormat = Literal["short", "long", "skin_long", "fragment"]
+PartNumbers  = Literal[1, 2]
 
-RAW_PARTS: dict[str, tuple["PartIDFormat", Literal[1, 2]]] = {
+RAW_PARTS: dict[str, tuple["PartIDFormat", "PartNumbers"]] = {
     "000": ("short",     1),
     "002": ("short",     2),
     "006": ("long",      1),
@@ -64,4 +65,4 @@ RAW_PART2_VALKYRIES: dict[str, tuple[str] | tuple[str, int]] = {
 
 __vesrion__ = (0, 0, 1)
 
-__all__ = ["PartIDFormat", "RAW_PARTS", "RAW_PART1_VALKYRIES", "RAW_PART2_VALKYRIES", "__vesrion__"]
+__all__ = ["PartNumbers", "PartIDFormat", "RAW_PARTS", "RAW_PART1_VALKYRIES", "RAW_PART2_VALKYRIES", "__vesrion__"]
