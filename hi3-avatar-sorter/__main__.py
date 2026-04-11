@@ -1,15 +1,14 @@
+from collections.abc import Iterable
 from pathlib import Path
 
-from models.avatar import RawAvatar
-
-from . import RAW_PARTS, PartIDFormat
-from .errors import ParsingError
+from . import RAW_PART1_VALKYRIES, RAW_PART2_VALKYRIES, RAW_PARTS, PartIDFormat
+from .errors import ParsingError, UnknownSourceFolderNameError
 from .models import Avatar
-from .utils import validate_paths
+from .utils import validate_and_sort_files, validate_paths
 
 
-folder_name_by_format: dict[PartIDFormat, list[str]] = {
-    "short": [
+format_by_folder: dict[Iterable[str], PartIDFormat] = {
+    (
         "avatarchibiicons",
         "avataritemicon",
         "avataricon",
@@ -17,49 +16,42 @@ folder_name_by_format: dict[PartIDFormat, list[str]] = {
         "avatardressicon",
         "avatariconside",
         "dressfigures"
-    ],
-    "long": [
+    ): "short",
+    (
         "avatarcardfigures",
         "avatarcardicons"
-    ],
-    "skin_long": [
-        "avatarcardfigures",
-        "avatarcardicons"
-    ],
-    "fragment": [
+    ): "long",
+    (
         "avatarfragmentfigures",
         "avatarfragmenticons"
-    ]
+    ): "fragment"
 }
-
-
-def validate_and_sort_files(folder: Path):
-    index_by_file: dict[Path, int] = {}
-
-    for file in folder.iterdir():
-        try:
-            index = int(RawAvatar.from_string(file.stem))
-            assert index not in index_by_file.values(), "Duplicate index"
-            index_by_file[file] = index
-        except ParsingError as e:
-            print(f"\033[7m[SKIP]\033[0m {file.stem}: {str(e)}")
-
-    return sorted(index_by_file.keys(), key=lambda file: index_by_file[file])
 
 
 def main(
     source_folder: str | Path,
     output_folder: str | Path = "output",
-    part_id_format: PartIDFormat | None = None
+    part_id_format: "PartIDFormat | None" = None
 ) -> None:
     source_folder, output_folder = validate_paths(source_folder, output_folder)
 
     if part_id_format is None:
-        raise NotImplementedError(folder_name_by_format)
+        try:
+            part_id_format = format_by_folder[source_folder.name]
+        except KeyError as e:
+            raise UnknownSourceFolderNameError(source_folder.name, (
+                folder_name
+                for folder_names in format_by_folder.keys()
+                for folder_name in folder_names
+            ))
 
     Avatar.build_part_map(RAW_PARTS)
+
     PART1 = Avatar.get_part(1, part_id_format)
+    PART1.build_valkyrie_map(RAW_PART1_VALKYRIES)
+
     PART2 = Avatar.get_part(2, part_id_format)
+    PART2.build_valkyrie_map(RAW_PART2_VALKYRIES)
 
     sorted_files = validate_and_sort_files(source_folder)
 
