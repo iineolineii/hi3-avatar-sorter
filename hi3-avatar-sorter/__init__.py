@@ -1,16 +1,15 @@
-from typing import Literal
+from typing import Literal, TypeAlias
 
 
-PartIDFormat = Literal["short", "long", "skin_long", "fragment"]
-PartNumbers  = Literal[1, 2]
+PartIDFormat: TypeAlias = Literal["short", "long", "fragment"]
+PartNumbers:  TypeAlias = Literal[1, 2]
 
 RAW_PARTS: dict[str, tuple["PartIDFormat", "PartNumbers"]] = {
     "000": ("short",     1),
     "002": ("short",     2),
     "006": ("long",      1),
     "302": ("long",      2),
-    # ...: ("skin_long", 1), # NOTE#3 Unused because Part 1 avatars do not have distinct long skin format
-    "062": ("skin_long", 2),
+    "062": ("long",      2), # Second long Part 2 ID is for skins found in folders avatarcardfigures and avatarcardicons
     "001": ("fragment",  1),
     "202": ("fragment",  2)
 }
