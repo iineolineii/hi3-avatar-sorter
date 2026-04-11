@@ -72,7 +72,7 @@ class MexContainer(Generic["K", "V"], Mapping["K", "V"], metaclass=ABCMeta):
 
     def reserve(self, key: "K", value: "V", mex: int) -> "V": # pyright: ignore[reportArgumentType]
         """
-        Reserve a value with a predefined MEX.
+        Reserve a value with a MEX closest to the given one.
 
         Args:
             key (`K`):
