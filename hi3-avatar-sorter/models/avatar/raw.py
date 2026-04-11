@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Self
 
 from ..base import BaseModel
@@ -19,7 +19,7 @@ from ...errors import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class RawAvatar:
     """
     An immutable raw representation of an avatar.
@@ -57,9 +57,9 @@ class RawAvatar:
         """
         return object.__getattribute__(BaseModel, "validate_id").__wrapped__(cls, id)
 
-    def validate(self) -> None:
+    def validated(self) -> Self:
         """
-        Validate all stored fields without modifying them.
+        Return a copy of this instance with all of its fields validated and normalized.
 
         Raises:
             `MissingSkinIDError`:
@@ -67,25 +67,32 @@ class RawAvatar:
 
             `MissingSkinRarityIDError`:
                 If `skin_id` is provided without `skin_rarity_id`.
+
+        Returns:
+            `Self`: The validated and normalized model instance.
         """
-        Part.validate_id(self.part_id)
-        Valkyrie.validate_id(self.valkyrie_id)
-        Battlesuit.validate_id(self.battlesuit_id)
+        validated_fields: dict[str, str] = {}
 
-        if self.skin_rarity_id is not None:
-            SkinRarity.validate_id(self.skin_rarity_id)
+        validated_fields["part_id"] = Part.validate_id(self.part_id)
+        validated_fields["valkyrie_id"] = Valkyrie.validate_id(self.valkyrie_id)
+        validated_fields["battlesuit_id"] = Battlesuit.validate_id(self.battlesuit_id)
 
-            if self.skin_id is not None:
-                Skin.validate_id(self.skin_id)
-            else:
-                raise MissingSkinIDError(self)
+        match (self.skin_rarity_id, self.skin_id):
+            case (_, None):
+                raise MissingSkinIDError(asdict(self))
 
-        elif self.skin_id is not None:
-            raise MissingSkinRarityIDError(self)
+            case (None, _):
+                raise MissingSkinRarityIDError(asdict(self))
+
+            case _:
+                validated_fields["skin_rarity_id"] = SkinRarity.validate_id(self.skin_rarity_id)
+                validated_fields["skin_id"] = Skin.validate_id(self.skin_id)
+
+        return type(self)(**validated_fields)
 
 
     @classmethod
-    def from_string(cls, string: str, validate: bool = False) -> Self:
+    def from_string(cls, string: str, validate: bool = True) -> Self:
         """
         Parse a raw avatar from a string representation.
 
@@ -95,7 +102,7 @@ class RawAvatar:
 
             validate (`bool`, *optional*):
                 Whether to validate the parsed result.
-                Defaults to `False`.
+                Defaults to `True`.
 
         Raises:
             `MissingAvatarIDError`:
@@ -116,13 +123,18 @@ class RawAvatar:
         raw = cls(part_id, valkyrie_id, battlesuit_id, skin_rarity_id, skin_id, note)
 
         if validate:
-            raw.validate()
+            return raw.validated()
 
         return raw
 
     @classmethod
-    def from_iterable(cls, iterable: Iterable[str], validate: bool = False) -> Self:
-        items = [str(item) for item in iterable]
+    def from_iterable(
+        cls,
+        iterable: Iterable[int | str],
+        validate: bool = True,
+        validate_string_ids: bool = True
+    ) -> Self:
+        items = list(iterable)
 
         match items:
             case [part_id, valkyrie_id, battlesuit_id, *suffix]:
@@ -137,13 +149,35 @@ class RawAvatar:
             case _:
                 raise MissingPartIDError(iterable)
 
-        skin_rarity_id, skin_id, note = cls.parse_suffix(suffix)
-        raw = cls(part_id, valkyrie_id, battlesuit_id, skin_rarity_id, skin_id, note)
+        string_fields: dict[str, str] = {}
 
-        if validate:
-            raw.validate()
+        def coerce(name: str, value: int | str | None) -> str: # pyright: ignore[reportReturnType]
+            if value is not None:
+                if validate_string_ids and isinstance(value, str):
+                    string_fields[name] = value
 
-        return raw
+                return str(value)
+
+        skin_rarity_id, skin_id, note = cls.parse_suffix(suffix) # pyright: ignore[reportArgumentType]
+
+        raw = cls(
+            coerce("part_id", part_id),
+            coerce("valkyrie_id", valkyrie_id),
+            coerce("battlesuit_id", battlesuit_id),
+            coerce("skin_rarity_id", skin_rarity_id),
+            coerce("skin_id", skin_id),
+            note
+        )
+
+        if not validate:
+            return raw
+
+        validated = raw.validated()
+
+        if not validate_string_ids:
+            return validated
+
+        return replace(validated, **string_fields)
 
 
     @classmethod
@@ -173,7 +207,7 @@ class RawAvatar:
         return part_id, valkyrie_id, battlesuit_id
 
     @classmethod
-    def parse_suffix(cls, suffix: list[str]) -> (
+    def parse_suffix(cls, suffix: Iterable[str]) -> (
         tuple[None, None, None] |
         tuple[None, None, str ] |
         tuple[str,  str,  None] |
@@ -183,7 +217,7 @@ class RawAvatar:
         Parse `skin_rarity_id`, `skin_id`, and `note` from the optional suffix of a raw input data.
 
         Args:
-            suffix (`list[str]`):
+            suffix (`Iterable[str]`):
                 Remaining input data components after the Avatar ID.
 
         Raises:
@@ -193,15 +227,17 @@ class RawAvatar:
         Returns:
             - `tuple[None, None, None]`: If the suffix is empty.
 
-            - `tuple[None, None, str]`: If the suffix contains only `note`.
+            - `tuple[None, None, str ]`: If the suffix contains only `note`.
 
             - `tuple[str, str, None]`: If the suffix contains `skin_rarity_id` and `skin_id` without `note`.
 
-            - `tuple[str, str, str]`: If the suffix contains `skin_rarity_id`, `skin_id`, and `note`.
+            - `tuple[str, str, str ]`: If the suffix contains `skin_rarity_id`, `skin_id`, and `note`.
         """
         skin_rarity_id: str | None = None
         skin_id:        str | None = None
         note:           str | None = None
+
+        suffix = list(suffix)
 
         match suffix:
             case [skin_rarity_id, skin_id, note]:
@@ -220,6 +256,19 @@ class RawAvatar:
                 raise TooLongSuffixError(suffix)
 
         return skin_rarity_id, skin_id, note # pyright: ignore[reportReturnType]
+
+
+    def __str__(self) -> str:
+        # Example: 60203_04_05_Special
+        result = self.id
+
+        if self.skin_rarity_id is not None and self.skin_id is not None:
+            result += f"_{self.skin_rarity_id}_{self.skin_id}"
+
+        if self.note:
+            result += f"_{self.note}"
+
+        return result
 
 
     def __int__(self):
