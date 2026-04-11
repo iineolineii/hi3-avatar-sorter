@@ -91,7 +91,9 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     # Otherwise it may produce stale or misleading results.
     @classmethod
     def get_part(
-        cls, part_no_or_id: int | str, part_id_format: PartIDFormat | None = None, /
+        cls,
+        part_no_or_id: int | str,
+        part_id_format: PartIDFormat | None = None, /
     ) -> Part:
         if part_id_format is None:
             return cls._get_part_by_id(part_no_or_id) # pyright: ignore[reportArgumentType]

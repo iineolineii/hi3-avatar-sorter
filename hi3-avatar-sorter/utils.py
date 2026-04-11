@@ -6,8 +6,9 @@ from .errors import (
     NonDirectoryOutputFolderError,
     NonDirectorySourceFolderError,
     NonEmptyOutputFolderError,
-    ParsingError,
+    ParsingError
 )
+from .fixers import AvatarFixer
 from .models.avatar import RawAvatar
 
 
@@ -53,8 +54,19 @@ def validate_and_sort_files(folder: Path):
     return sorted(index_by_file.keys(), key=lambda file: index_by_file[file])
 
 
+def fix_avatar_string(avatar_string: str, fixers: list[AvatarFixer]) -> str | None:
+    avatar_string = avatar_string.lower()
+
+    # Each input is allowed to pass through only one mechanism.
+    # The first successful fix wins, so the same string is never rewritten twice.
+    for fixer in fixers:
+        if fixed_string := fixer.fix(avatar_string):
+            return fixed_string
+
+
 __all__ = [
-    "validate_paths",
+    "fix_avatar_string",
     "snake_case",
+    "validate_paths",
     "validate_and_sort_files"
 ]
