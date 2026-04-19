@@ -234,7 +234,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         result = [f"{self.part.no:02}", f"{self.valkyrie.no:02}", f"{self.battlesuit.no:02}"]
 
         if self.skin_rarity is not None and self.skin is not None:
-            result += [f"{self.skin_rarity.no:02}", f"{self.skin.no:02}"]
+            result += [f"{self.skin_rarity.id:02}", f"{self.skin.no:02}"]
 
         if self.note:
             result += [f"{self.note}"]
@@ -246,7 +246,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         result = f"{self.part.no:02}{self.valkyrie.no:02}{self.battlesuit.no:02}"
 
         if self.skin_rarity is not None and self.skin is not None:
-            result += f"{self.skin_rarity.no:02}{self.skin.no:02}"
+            result += f"{self.skin_rarity.id:02}{self.skin.no:02}"
         else:
             result += "0000"
 
@@ -257,7 +257,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         result = f"{self.part.no:02}{self.valkyrie.no:02}{self.battlesuit.no:02}"
 
         if self.skin_rarity is not None and self.skin is not None:
-            result += f"_{self.skin_rarity.no:02}_{self.skin.no:02}"
+            result += f"_{self.skin_rarity.id:02}_{self.skin.no:02}"
 
         if self.note:
             result += f"_{self.note}"

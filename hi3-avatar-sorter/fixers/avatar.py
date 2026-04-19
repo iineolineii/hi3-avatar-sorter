@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from itertools import cycle
 
 from frozendict import frozendict
 
@@ -28,9 +29,9 @@ class AvatarFixer:
 
         for malformed_components, fixed_components in raw_replacement_map.items():
             malformed_dtos = self.dto_from_components(malformed_components)
-            fixed_dtos = self.dto_from_components(fixed_components)
+            fixed_dtos = cycle(self.dto_from_components(fixed_components))
 
-            for malformed_dto, fixed_dto in zip(malformed_dtos, fixed_dtos, strict=True):
+            for malformed_dto, fixed_dto in zip(malformed_dtos, fixed_dtos):
                 malformed_string = str(malformed_dto).lstrip("0")
                 replacement_map[malformed_string] = fixed_dto
 
@@ -46,7 +47,7 @@ class AvatarFixer:
             yield RawAvatar.from_iterable(
                 normalized_components,
                 validate=True,
-                validate_string_ids=False,
+                validate_string_ids=False
             )
 
 
