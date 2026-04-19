@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import sys
 from collections import defaultdict
 from contextlib import suppress
@@ -40,39 +41,39 @@ class Part(BaseModel):
 
         raise UnknownValkyrieIDError(valkyrie_id, battlesuit_id)
 
-    def build_valkyrie_map(self, raw_valkyries: dict[str, tuple[str] | tuple[str, int]]) -> None:
-        # Store range start for each ID
+    def build_valkyrie_map(self, raw_valkyries: Iterable[tuple[str, str, int] | tuple[str, str]]) -> None:
         range_starts: dict[str, int] = {}
+        valkyrie_map: dict[str, tuple[Valkyrie, ...]] = defaultdict(tuple)
 
-        valkyrie_map: dict[str, list[Valkyrie]] = defaultdict(list)
+        for no, (id, name, *rest) in enumerate(raw_valkyries, start=1):
+            # Use default range if end is not provided
+            if not rest:
+                valkyrie = Valkyrie(id=id, no=no, name=name)
 
-        for id, raw in raw_valkyries.items():
-            name: str = raw[0]
-
-            # Current start is the previous end
-            # Or 0 if current valkyrie is the first one with current ID
-            start = range_starts.get(id, 0)
-
-            if len(raw) > 1:
-                end = raw[1]
-
-                valkyrie = Valkyrie(
-                    id=id,
-                    name=name,
-                    battlesuit_id_range=range(start, end)
-                )
             else:
+                # Get the last end for this id, or start from 0
+                range_start = range_starts.get(id, 0)
+
+                # Use explicitly provided end
+                range_end = rest[0]
+
+                battlesuit_id_range = range(range_start, range_end)
+
                 valkyrie = Valkyrie(
                     id=id,
-                    name=name
+                    no=no,
+                    name=name,
+                    battlesuit_id_range=battlesuit_id_range
                 )
-                end = valkyrie.battlesuit_id_range.stop
 
-            valkyrie_map[id].append(valkyrie)
+            # Extend the valkyrie array for this id
+            valkyrie_map[id] += (valkyrie,)
 
             # Current end is the next start
-            range_starts[id] = end
+            range_starts[id] = valkyrie.battlesuit_id_range.stop
 
-        self.__valkyries = frozendict(valkyrie_map)
+        # Freeze and assign the valkyrie container
+        object.__setattr__(self, "valkyries", frozendict(valkyrie_map))
+
 
 __all__ = ["Valkyrie"]
