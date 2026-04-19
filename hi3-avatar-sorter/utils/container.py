@@ -14,23 +14,24 @@ class MexContainer(Generic[K, V], dict["K", "V"], metaclass=ABCMeta):
     def __init__(
         self,
         map: dict["K", "V"] = {},
-        mex_attr_name: str = "no"
+        attr_name: str = "no",
+        start: int = 1
     ) -> None:
         """
         Args:
             map (`dict["K", "V"]`):
                 Initial container data. Defaults to an empty dictionary.
                 All values passed here will be reserved via the `reserve()` method.
-                Each of these values must have an attribute with the specified in `mex_attr_name` argument.
+                Each of these values must have an attribute with the specified in `attr_name` argument.
 
-            mex_attr_name (`str`):
+            attr_name (`str`):
                 Name of the values' attribute used as a MEX. Defaults to `"no"`.
         """
         super().__init__()
 
-        self.mex_attr_name = mex_attr_name
+        self.attr_name = attr_name
         """
-        mex_attr_name (`str`):
+        attr_name (`str`):
             Name of the values' attribute used as a MEX. Defaults to `"no"`.
         """
         self.map: dict["K", "V"] = map
@@ -40,7 +41,7 @@ class MexContainer(Generic[K, V], dict["K", "V"], metaclass=ABCMeta):
         """
         self.update(self.map)
         self.consumed_mexes: set[int] = set()
-        self.current_mex = 0
+        self.current_mex = start
 
     def consume_mex(self) -> int:
         """
@@ -83,7 +84,7 @@ class MexContainer(Generic[K, V], dict["K", "V"], metaclass=ABCMeta):
 
     def __setitem__(self, key: "K", value: "V") -> None:
         mex = self.consume_mex()
-        object.__setattr__(value, self.mex_attr_name, mex)
+        object.__setattr__(value, self.attr_name, mex)
 
         return super().__setitem__(key, value)
 
