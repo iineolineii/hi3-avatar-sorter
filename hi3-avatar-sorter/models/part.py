@@ -24,7 +24,7 @@ class Part(BaseModel):
     id_length: ClassVar[int] = 3
 
 
-    @lru_cache # Add caching according to NOTE#4
+    @lru_cache # Add caching according to NOTE#2
     def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> Valkyrie:
         numeric_battlesuit_id = int(Battlesuit.validate_id(battlesuit_id))
 

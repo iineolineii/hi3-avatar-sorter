@@ -70,7 +70,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
     @classmethod
     @lru_cache
-    # NOTE#4: Using cache is beneficial only when
+    # NOTE#2: Using cache is beneficial only when
     # the result is computed using loops
     # and the children container is immutable.
     # Otherwise it may produce stale or misleading results.

@@ -32,6 +32,7 @@ EMPTY_BATTLESUIT_ID_REPLACEMENT_MAP: RawReplacementMap = {
     (1, HIMEKO, "", 4, 1): (1, HIMEKO, 1, 4, 1)
 }
 
+# These avatars' IDs are mixed up
 WRONG_ID_REPLACEMENT_MAP: RawReplacementMap = {
     # 3rd Elysia is not a new character
     (2, ELYSIA_P2, 1): (1, ELYSIA_P1, 3),
