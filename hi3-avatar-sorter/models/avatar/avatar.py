@@ -47,57 +47,65 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         created via any of the `from_<something>` factory methods.
     """
 
-    @overload
     @classmethod
-    def get_part(cls, part_id: str, /) -> Part: ...
-    """
-    Retrieve a `Part` by its ID.
+    def get_part(cls, part_id: str) -> Part:
+        """
+        Retrieve a `Part` by its ID.
 
-    Args:
-        part_id (`str`):
-            Part ID.
+        Args:
+            part_id (`str`):
+                Part ID.
 
-    Raises:
-        `UnknownPartIDError`:
-            If the Part ID does not exist.
+        Raises:
+            `UnknownPartIDError`:
+                If the Part ID does not exist.
 
-    Returns:
-        `Part`: The corresponding Part.
-    """
-
-    @lru_cache
-    # NOTE#4: Using cache is beneficial only when
-    # the result is computed using loops
-    # and the children container is immutable.
-    # Otherwise it may produce stale or misleading results.
-    @classmethod
-    def get_part(
-        cls,
-        part_no_or_id: int | str,
-        part_id_format: PartIDFormat | None = None, /
-    ) -> Part:
-        if part_id_format is None:
-            return cls._get_part_by_id(part_no_or_id) # pyright: ignore[reportArgumentType]
-
-        return cls._get_part_by_no(part_no_or_id, part_id_format) # pyright: ignore[reportArgumentType]
-
-    @classmethod
-    def _get_part_by_id(cls, part_id: str) -> Part:
+        Returns:
+            `Part`: The corresponding Part.
+        """
         try:
             return cls.parts[part_id]
         except KeyError as e:
             raise UnknownPartIDError(part_id) from e
 
     @classmethod
-    def _get_part_by_no(cls, part_no: int, part_id_format: PartIDFormat) -> Part:
-        try:
-            return cls.part_by_no[(part_no, part_id_format)]
-        except KeyError as e:
-            raise UnknownPartNoError(part_no, part_id_format) from e
+    @lru_cache
+    # NOTE#4: Using cache is beneficial only when
+    # the result is computed using loops
+    # and the children container is immutable.
+    # Otherwise it may produce stale or misleading results.
+    def get_part_by_no(cls, part_no: int, part_id_format: PartIDFormats) -> list[Part]:
+        """
+        Retrieve all `Part`s with the given number and ID format.
+
+        Args:
+            part_no (`int`):
+                Part number.
+
+            part_id_format (`PartIDFormat`):
+                Format of the Part ID.
+
+        Raises:
+            `UnknownPartNoError`:
+                If no Part matches the given number and format.
+
+        Returns:
+            `list[Part]`: The found `Part`s.
+        """
+        found = [
+            part
+            for part in cls.parts.values()
+            if part.no == part_no and part.id_format == part_id_format
+        ]
+
+        if not found:
+            raise UnknownPartNoError(part_no, part_id_format)
+
+        return found
 
 
     @classmethod
-    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", "PartNumbers"]]) -> None:
+    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormats", "PartNumbers"]]) -> None:
         """
         Initialize the class-level Part map from raw Part data.
 
@@ -105,34 +113,10 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             raw_parts (`dict[str, tuple[PartIDFormat, PartNumbers]]`):
                 Mapping from Part ID to a tuple of (Part ID format, Part number).
         """
-        part_by_id: dict[str, Part] = {}
-        part_by_no: dict[tuple["PartIDFormat", "PartNumbers"], Part] = {}
-
-        for id, (id_format, no) in raw_parts.items():
-            part = Part(id=id, no=no, id_format=id_format)
-            part_by_id[id] = part
-
-            if (id_format, no) in part_by_no:
-                raise DuplicatePartNoError(no, id_format, raw_parts)
-
-            part_by_no[(id_format, no)] = part
-
-        cls.__part_by_id = frozendict(part_by_id)
-        cls.__part_by_no = frozendict(part_by_no)
-
-
-    def reserve(self) -> None:
-        """
-        Reserve domain objects in related containers.
-
-        Registers this avatar's battlesuit and skin components for internal
-        tracking in `Valkyrie` and `Battlesuit` instances.
-        """
-        self.valkyrie.reserve_battlesuit(self.battlesuit)
-
-        if self.skin_rarity is not None and self.skin is not None:
-            self.battlesuit.reserve_skin_rarity(self.skin_rarity)
-            self.skin_rarity.reserve_skin(self.skin)
+        cls.parts = frozendict({
+            id: Part(id=id, no=no, id_format=id_format)
+            for id, (id_format, no) in raw_parts.items()
+        })
 
 
     @classmethod
