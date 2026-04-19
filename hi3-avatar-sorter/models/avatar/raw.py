@@ -80,6 +80,10 @@ class RawAvatar:
         validated_fields["battlesuit_id"] = Battlesuit.validate_id(self.battlesuit_id)
 
         match (self.skin_rarity_id, self.skin_id):
+            case (None, None):
+                validated_fields["skin_rarity_id"] = None # pyright: ignore[reportArgumentType]
+                validated_fields["skin_id"] = None # pyright: ignore[reportArgumentType]
+
             case (_, None):
                 raise MissingSkinIDError(asdict(self))
 
@@ -155,7 +159,7 @@ class RawAvatar:
 
         def coerce(name: str, value: int | str | None) -> str: # pyright: ignore[reportReturnType]
             if value is not None:
-                if validate_string_ids and isinstance(value, str):
+                if isinstance(value, str):
                     string_fields[name] = value
 
                 return str(value)
