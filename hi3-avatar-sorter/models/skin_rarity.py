@@ -8,7 +8,7 @@ from ..mex_container import MexContainer
 from ..errors import UnknownSkinRarityIDError
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class SkinRarity(BaseModel):
     skins: "MexContainer[str, Skin]" = field(default_factory=MexContainer) # pyright: ignore[reportAssignmentType]
     valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")

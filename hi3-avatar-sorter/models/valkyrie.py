@@ -5,9 +5,11 @@ from .battlesuit import Battlesuit
 from ..mex_container import MexContainer
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Valkyrie(BaseModel):
     name: str
+    no: int = field(init=True)
+
     battlesuits: "MexContainer[str, Battlesuit]" = field(default_factory=MexContainer) # pyright: ignore[reportAssignmentType]
     battlesuit_id_range: range = field(default=range(0, 100))
 

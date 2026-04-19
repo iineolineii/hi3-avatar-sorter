@@ -5,7 +5,7 @@ from .skin_rarity import SkinRarity
 from ..mex_container import MexContainer
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Battlesuit(BaseModel):
     skin_rarities: "MexContainer[str, SkinRarity]" = field(default_factory=MexContainer) # pyright: ignore[reportAssignmentType]
 

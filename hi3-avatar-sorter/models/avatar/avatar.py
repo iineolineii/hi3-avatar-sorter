@@ -1,8 +1,8 @@
 import sys
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import ClassVar, Self, overload
+from typing import Any, ClassVar, Self
 
 from .meta import AvatarMeta
 from .raw import RawAvatar
@@ -12,19 +12,14 @@ from ..part import Part
 from ..skin import Skin
 from ..skin_rarity import SkinRarity
 from ..valkyrie import Valkyrie
-from ... import PartIDFormat, PartNumbers
-from ...errors import (
-    DuplicatePartNoError,
-    EmptyNoteError,
-    UnknownPartIDError,
-    UnknownPartNoError
-)
+from ... import PartIDFormats, PartNumbers
+from ...errors import EmptyNoteError, UnknownPartIDError, UnknownPartNoError
 
 if sys.version_info < (3, 15):
     from frozendict import frozendict
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Avatar(BaseModel, metaclass=AvatarMeta):
     """
     High-level avatar model.
@@ -33,37 +28,23 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     Wraps a `RawAvatar` instance into domain objects (`Part`, `Valkyrie`,
     `Battlesuit`, `SkinRarity`, `Skin`) and optionally formats the note.
     """
-    part: Part
-    valkyrie: Valkyrie
-    battlesuit: Battlesuit
+    part:        Part
+    valkyrie:    Valkyrie
+    battlesuit:  Battlesuit
     skin_rarity: SkinRarity | None = None
-    skin: Skin | None = None
-    note: str | None = None
+    skin:        Skin       | None = None
+    note:        str        | None = None
 
+    parts: ClassVar[frozendict[str, Part]]
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
-    @overload
-    @classmethod
-    def get_part(cls, part_no: int, part_id_format: PartIDFormat, /) -> Part: ...
+    raw: RawAvatar = field(init=False, repr=False)
     """
-    Retrieve a `Part` by its number and ID format.
+    Original `RawAvatar` DTO used to construct this model.
 
-    Args:
-        part_no (`int`):
-            Part number.
-
-        part_id_format (`PartIDFormat`):
-            Format of the Part ID.
-
-    Raises:
-        `UnknownPartNoError`:
-            If no Part matches the given number and format.
-
-        `AmbiguousPartNoError`:
-            If multiple parts match the given number and format.
-
-    Returns:
-        `Part`: The corresponding Part.
+    Note:
+        This attribute is not present if the instance was not
+        created via any of the `from_<something>` factory methods.
     """
 
     @overload
@@ -187,7 +168,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             skin=skin,
             note=note
         )
-        self.__raw = raw # pyright: ignore[reportAttributeAccessIssue]
+        object.__setattr__(self, "raw", raw)
         return self
 
 
@@ -221,26 +202,6 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         return cls.from_raw(RawAvatar.from_iterable(iterable))
 
 
-    @property
-    def raw(self) -> RawAvatar:
-        """
-        Original `RawAvatar` DTO used to construct this model.
-
-        Note:
-            This attribute is not present if the instance was not
-            created via any of the `from_<something>` factory methods.
-        """
-        try:
-            return self.__raw # pyright: ignore[reportAttributeAccessIssue]
-        except AttributeError as e:
-            classname = type(self).__name__
-            raise AttributeError(
-                f"{classname!r} object has no attribute 'raw'. "
-                f"Maybe it was created without using any of the "
-                f"'{classname}.from_<something>' factory methods?"
-            )
-
-
     @classmethod
     def validate_note(cls, note: str | None) -> str:
         """
@@ -264,6 +225,24 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             note = "Veliona"
 
         return note.capitalize()
+
+
+    def __getattribute__(self, name: str) -> Any:
+        try:
+            return super().__getattribute__(name)
+
+        except AttributeError:
+            class_name = type(self).__name__
+            base_message = f"{class_name!r} object has no attribute {name!r}."
+
+            if name == "raw":
+                raise AttributeError(
+                    base_message +
+                    f" Perhaps it was not created via any of the "
+                    f"'{class_name}.from_<something>' factory methods?"
+                )
+
+            raise
 
 
     def __iter__(self) -> Iterator[str]:

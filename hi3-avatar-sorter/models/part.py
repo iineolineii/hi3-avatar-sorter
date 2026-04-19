@@ -1,45 +1,44 @@
-from collections.abc import Iterable
 import sys
 from collections import defaultdict
-from contextlib import suppress
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from .base import BaseModel
+from .battlesuit import Battlesuit
 from .valkyrie import Valkyrie
-from .. import PartIDFormat
+from .. import PartIDFormats
 from ..errors import UnknownValkyrieIDError
 
 if sys.version_info < (3, 15):
     from frozendict import frozendict
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Part(BaseModel):
     no: int = field(init=True)
-    id_format: "PartIDFormat"
+    id_format: "PartIDFormats"
 
+    valkyries: frozendict[str, tuple[Valkyrie, ...]] = field(init=False)
     id_length: ClassVar[int] = 3
 
-    @property
-    def valkyries(self) -> frozendict[str, list[Valkyrie]]:
-        try:
-            return self.__valkyries
-        except AttributeError:
-            raise AttributeError(
-                f"{type(self).__name__!r} object has no attribute 'valkyries'. "
-                f"Maybe you forgot to call {self.build_valkyrie_map.__qualname__!r}?"
-            )
 
     @lru_cache # Add caching according to NOTE#4
     def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> Valkyrie:
-        with suppress(KeyError):
-            for valkyrie in self.valkyries[valkyrie_id]:
-                if battlesuit_id in valkyrie.battlesuit_id_range:
-                    return valkyrie
+        numeric_battlesuit_id = int(Battlesuit.validate_id(battlesuit_id))
+
+        try:
+            valkyries = self.valkyries[valkyrie_id]
+        except KeyError as e:
+            raise UnknownValkyrieIDError(valkyrie_id, battlesuit_id) from e
+
+        for valkyrie in valkyries:
+            if numeric_battlesuit_id in valkyrie.battlesuit_id_range:
+                return valkyrie
 
         raise UnknownValkyrieIDError(valkyrie_id, battlesuit_id)
+
 
     def build_valkyrie_map(self, raw_valkyries: Iterable[tuple[str, str, int] | tuple[str, str]]) -> None:
         range_starts: dict[str, int] = {}
@@ -76,4 +75,29 @@ class Part(BaseModel):
         object.__setattr__(self, "valkyries", frozendict(valkyrie_map))
 
 
-__all__ = ["Valkyrie"]
+    def __getattribute__(self, name: str) -> Any:
+        try:
+            return super().__getattribute__(name)
+
+        except AttributeError:
+            class_name = type(self).__name__
+            base_message = f"{class_name!r} object has no attribute '{name}'."
+
+            if name == "no":
+                raise AttributeError(
+                    base_message +
+                    f"Perhaps it was created without using the "
+                    f"'build_part_map' factory method?"
+                )
+
+            if name == "valkyries":
+                raise AttributeError(
+                    base_message +
+                    f"Perhaps you forgot to call "
+                    f"'build_valkyrie_map' method?"
+                )
+
+            raise
+
+
+__all__ = ["Part"]
