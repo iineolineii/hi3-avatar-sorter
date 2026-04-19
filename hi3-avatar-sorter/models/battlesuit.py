@@ -14,10 +14,7 @@ class Battlesuit(BaseModel):
         return skin_rarity
 
     def get_or_add_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        return self.skin_rarities.get(skin_rarity.id, skin_rarity)
-
-    def reserve_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        return self.skin_rarities.reserve(skin_rarity.id, skin_rarity, int(skin_rarity.id))
+        return self.skin_rarities.setdefault(skin_rarity.id, skin_rarity)
 
 
 __all__ = ["Battlesuit"]

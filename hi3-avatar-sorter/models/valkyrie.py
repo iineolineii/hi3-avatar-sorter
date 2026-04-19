@@ -16,10 +16,7 @@ class Valkyrie(BaseModel):
         return battlesuit
 
     def get_or_add_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
-        return self.battlesuits.get(battlesuit.id, battlesuit)
-
-    def reserve_battlesuit(self, battlesuit: "Battlesuit") -> "Battlesuit":
-        return self.battlesuits.reserve(battlesuit.id, battlesuit, int(battlesuit.id) - self.battlesuit_id_range.start)
+        return self.battlesuits.setdefault(battlesuit.id, battlesuit)
 
     def __str__(self) -> str:
         return self.name

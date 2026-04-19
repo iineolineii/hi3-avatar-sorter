@@ -18,10 +18,7 @@ class SkinRarity(BaseModel):
         return skin
 
     def get_or_add_skin(self, skin: "Skin") -> "Skin":
-        return self.skins.get(skin.id, skin)
-
-    def reserve_skin(self, skin: "Skin") -> "Skin":
-        return self.skins.reserve(skin.id, skin, int(skin.id))
+        return self.skins.setdefault(skin.id, skin)
 
 
     @classmethod
