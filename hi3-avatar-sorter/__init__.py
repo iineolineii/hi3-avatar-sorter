@@ -1,17 +1,36 @@
-from typing import Literal, TypeAlias
+from collections.abc import Iterable
+
+from .enums import PartIDFormats, PartNumbers
 
 
-PartIDFormat: TypeAlias = Literal["short", "long", "fragment"]
-PartNumbers:  TypeAlias = Literal[1, 2]
+FORMAT_BY_FOLDER: dict[Iterable[str], PartIDFormats] = {
+    (
+        "avatarchibiicons",
+        "avataritemicon",
+        "avataricon",
+        "dressicons",
+        "avatardressicon",
+        "avatariconside",
+        "dressfigures"
+    ): PartIDFormats.SHORT,
+    (
+        "avatarcardfigures",
+        "avatarcardicons"
+    ): PartIDFormats.LONG,
+    (
+        "avatarfragmentfigures",
+        "avatarfragmenticons"
+    ): PartIDFormats.FRAGMENT
+}
 
-RAW_PARTS: dict[str, tuple["PartIDFormat", "PartNumbers"]] = {
-    "000": ("short",     1),
-    "002": ("short",     2),
-    "006": ("long",      1),
-    "302": ("long",      2),
-    "062": ("long",      2), # Second long Part 2 ID is for skins found in folders avatarcardfigures and avatarcardicons
-    "001": ("fragment",  1),
-    "202": ("fragment",  2)
+RAW_PARTS: dict[str, tuple["PartIDFormats", "PartNumbers"]] = {
+    "000": (PartIDFormats.SHORT,    PartNumbers.PART1),
+    "002": (PartIDFormats.SHORT,    PartNumbers.PART2),
+    "006": (PartIDFormats.LONG,     PartNumbers.PART1),
+    "302": (PartIDFormats.LONG,     PartNumbers.PART2),
+    "062": (PartIDFormats.LONG,     PartNumbers.PART2), # Second long Part 2 ID is for skins found in folders avatarcardfigures and avatarcardicons
+    "001": (PartIDFormats.FRAGMENT, PartNumbers.PART1),
+    "202": (PartIDFormats.FRAGMENT, PartNumbers.PART2),
 }
 
 
@@ -65,8 +84,7 @@ RAW_PART2_VALKYRIES: list[tuple[str, str, int] | tuple[str, str]] = [
 __vesrion__ = (0, 0, 1)
 
 __all__ = [
-    "PartNumbers",
-    "PartIDFormat",
+    "FORMAT_BY_FOLDER",
     "RAW_PARTS",
     "RAW_PART1_VALKYRIES",
     "RAW_PART2_VALKYRIES",
