@@ -7,7 +7,6 @@ from ..errors import (
     NonEmptyOutputFolderError,
     ParsingError
 )
-from ..models.avatar import RawAvatar
 
 
 def validate_paths(source_folder: str | Path, output_folder: str | Path = "output") -> tuple[Path, Path]:
@@ -40,12 +39,14 @@ def validate_paths(source_folder: str | Path, output_folder: str | Path = "outpu
 
 def validate_and_sort_files(folder: Path):
     index_by_file: dict[Path, int] = {}
+    from ..models.avatar import RawAvatar
 
     for file in folder.iterdir():
         try:
             index = int(RawAvatar.from_string(file.stem))
             assert index not in index_by_file.values(), "Duplicate index"
             index_by_file[file] = index
+
         except ParsingError as e:
             print(f"\033[7m[SKIP]\033[0m {file.stem}: {str(e)}")
 

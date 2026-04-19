@@ -11,7 +11,7 @@ from ..models.avatar import RawAvatar
 
 @dataclass(frozen=True, slots=True)
 class AvatarFixer:
-    part_id_format: PartIDFormats
+    part_id_format: "PartIDFormats"
     raw_replacement_map: "RawReplacementMap"
 
     replacement_map: "ReplacementMap" = field(init=False, repr=False)
@@ -20,11 +20,11 @@ class AvatarFixer:
         replacement_map = self.build_replacement_map(self.raw_replacement_map)
         object.__setattr__(self, "replacement_map", frozendict(replacement_map))
 
-    def fix(self, avatar_string: str) -> RawAvatar | None:
+    def fix(self, avatar_string: str) -> "RawAvatar | None":
         return self.replacement_map.get(avatar_string)
 
-    def build_replacement_map(self, raw_replacement_map: "RawReplacementMap") -> dict[str, RawAvatar]:
-        replacement_map: dict[str, RawAvatar] = {}
+    def build_replacement_map(self, raw_replacement_map: "RawReplacementMap") -> dict[str, "RawAvatar"]:
+        replacement_map: dict[str, "RawAvatar"] = {}
 
         for malformed_components, fixed_components in raw_replacement_map.items():
             malformed_dtos = self.dto_from_components(malformed_components)
@@ -36,7 +36,7 @@ class AvatarFixer:
 
         return replacement_map
 
-    def dto_from_components(self, avatar_components: "AvatarComponents") -> Iterator[RawAvatar]:
+    def dto_from_components(self, avatar_components: "AvatarComponents") -> Iterator["RawAvatar"]:
         part_no = avatar_components[0]
         parts = Avatar.get_part_by_no(part_no, self.part_id_format)
 
