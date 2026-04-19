@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, replace
-from typing import Self
+from typing import ClassVar, Self
 
 from ..base import BaseModel
 from ..battlesuit import Battlesuit
@@ -34,6 +34,8 @@ class RawAvatar:
     skin_rarity_id: str | None = None
     skin_id:        str | None = None
     note:           str | None = None
+
+    id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
     @property
     def id(self) -> str:
@@ -175,10 +177,9 @@ class RawAvatar:
         validated = raw.validated()
 
         if not validate_string_ids:
-            return validated
+            return replace(validated, **string_fields)
 
-        return replace(validated, **string_fields)
-
+        return validated
 
     @classmethod
     def parse_id(cls, id: str) -> tuple[str, str, str]:
@@ -258,7 +259,7 @@ class RawAvatar:
         return skin_rarity_id, skin_id, note # pyright: ignore[reportReturnType]
 
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         # Example: 60203_04_05_Special
         result = self.id
 
