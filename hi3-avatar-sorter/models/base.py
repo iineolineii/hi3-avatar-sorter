@@ -50,7 +50,7 @@ class BaseModel:
             raise
 
     def __int__(self) -> int:
-        return self.no + 1
+        return self.no
 
     def __str__(self) -> str:
         return f"№{int(self)}"

@@ -12,11 +12,11 @@ FORMAT_BY_FOLDER: dict[Iterable[str], PartIDFormats] = {
         "avatardressicon",
         "avatariconside",
         "dressfigures"
-    ): PartIDFormats.SHORT,
+    ): PartIDFormats.ICON,
     (
         "avatarcardfigures",
         "avatarcardicons"
-    ): PartIDFormats.LONG,
+    ): PartIDFormats.SPLASH,
     (
         "avatarfragmentfigures",
         "avatarfragmenticons"
@@ -24,11 +24,11 @@ FORMAT_BY_FOLDER: dict[Iterable[str], PartIDFormats] = {
 }
 
 RAW_PARTS: dict[str, tuple["PartIDFormats", "PartNumbers"]] = {
-    "000": (PartIDFormats.SHORT,    PartNumbers.PART1),
-    "002": (PartIDFormats.SHORT,    PartNumbers.PART2),
-    "006": (PartIDFormats.LONG,     PartNumbers.PART1),
-    "302": (PartIDFormats.LONG,     PartNumbers.PART2),
-    "062": (PartIDFormats.LONG,     PartNumbers.PART2), # Second long Part 2 ID is for skins found in folders avatarcardfigures and avatarcardicons
+    "000": (PartIDFormats.ICON,     PartNumbers.PART1),
+    "002": (PartIDFormats.ICON,     PartNumbers.PART2),
+    "006": (PartIDFormats.SPLASH,   PartNumbers.PART1),
+    "302": (PartIDFormats.SPLASH,   PartNumbers.PART2),
+    "062": (PartIDFormats.SPLASH,   PartNumbers.PART2), # Second splash Part 2 ID is for skins found in folders avatarcardfigures and avatarcardicons
     "001": (PartIDFormats.FRAGMENT, PartNumbers.PART1),
     "202": (PartIDFormats.FRAGMENT, PartNumbers.PART2),
 }

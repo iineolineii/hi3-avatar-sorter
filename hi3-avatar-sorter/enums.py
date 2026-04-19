@@ -2,8 +2,8 @@ from enum import IntEnum, StrEnum, auto
 
 
 class PartIDFormats(StrEnum):
-    SHORT = auto()
-    LONG = auto()
+    ICON     = auto()
+    SPLASH   = auto()
     FRAGMENT = auto()
 
 
