@@ -12,7 +12,7 @@ from ..part import Part
 from ..skin import Skin
 from ..skin_rarity import SkinRarity
 from ..valkyrie import Valkyrie
-from ... import PartIDFormats, PartNumbers
+from ...enums import PartIDFormats, PartNumbers
 from ...errors import EmptyNoteError, UnknownPartIDError, UnknownPartNoError
 
 if sys.version_info < (3, 15):

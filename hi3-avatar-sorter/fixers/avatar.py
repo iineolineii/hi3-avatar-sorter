@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from frozendict import frozendict
 
 from .constants import AvatarComponents, RawReplacementMap, ReplacementMap
-from .. import PartIDFormats
+from ..enums import PartIDFormats
 from ..models import Avatar
 from ..models.avatar import RawAvatar
 

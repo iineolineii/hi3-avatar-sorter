@@ -1,22 +1,11 @@
-from collections.abc import Iterable
 import json
-import re
+from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
-    from . import PartIDFormat, PartNumbers
-
-
-# NOTE#2: This function is placed here to prevent circular import of utils.py
-def snake_case(text: str) -> str:
-    # Source: https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-97.php
-    # License: CC BY 4.0
-    return "_".join(
-        re.sub("([A-Z][a-z]+)",
-        r" \1",
-        re.sub("([A-Z]+)", r" \1",
-        text.replace("-", " ."))).split()).lower()
+    from .enums import PartIDFormats
 
 
 class BaseError(ValueError):
@@ -67,7 +56,7 @@ class MissingSkinRarityIDError(ParsingError):
         super().__init__(
             "Raw avatar contains "
             "Skin ID but is missing Skin rarity ID: "
-            f"{json.dumps(raw_avatar, indent=4)!r}."
+            f"{json.dumps(raw_avatar, indent=4)}."
         )
 
 class MissingSkinIDError(ParsingError):
@@ -77,7 +66,7 @@ class MissingSkinIDError(ParsingError):
         super().__init__(
             "Raw avatar contains "
             "Skin rarity ID but is missing Skin ID: "
-            f"{json.dumps(raw_avatar, indent=4)!r}."
+            f"{json.dumps(raw_avatar, indent=4)}."
         )
 
 
@@ -154,24 +143,6 @@ class TooLongSuffixError(ParsingError):
         )
 
 
-class DuplicatePartNoError(ParsingError):
-    def __init__(
-        self,
-        no: int,
-        id_format: "PartIDFormat",
-        raw_parts: dict[str, tuple["PartIDFormat", "PartNumbers"]]
-    ) -> None:
-        self.no = no
-        self.id_format = id_format
-        self.raw_parts = raw_parts
-
-        super().__init__(
-            f"Raw part map contains multiple parts with "
-            f"number {no!r} and ID format {id_format!r}: "
-            f"{json.dumps(raw_parts, indent=4)!r}."
-        )
-
-
 class UnknownPartIDError(ParsingError):
     def __init__(self, id: str) -> None:
         self.id = id
@@ -179,7 +150,7 @@ class UnknownPartIDError(ParsingError):
         super().__init__(f"Unknown Part ID {id!r}.")
 
 class UnknownPartNoError(ParsingError):
-    def __init__(self, no: int, id_format: "PartIDFormat") -> None:
+    def __init__(self, no: int, id_format: "PartIDFormats") -> None:
         self.no = no
         self.id_format = id_format
 

@@ -4,7 +4,7 @@ from typing import ClassVar
 
 from .base import BaseModel
 from .skin import Skin
-from ..mex_container import MexContainer
+from ..utils.container import MexContainer
 from ..errors import UnknownSkinRarityIDError
 
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 from .base import BaseModel
 from .skin_rarity import SkinRarity
-from ..mex_container import MexContainer
+from ..utils.container import MexContainer
 
 
 @dataclass(frozen=True, slots=True)

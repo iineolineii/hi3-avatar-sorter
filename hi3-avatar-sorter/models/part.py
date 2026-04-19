@@ -8,7 +8,7 @@ from typing import Any, ClassVar
 from .base import BaseModel
 from .battlesuit import Battlesuit
 from .valkyrie import Valkyrie
-from .. import PartIDFormats
+from ..enums import PartIDFormats
 from ..errors import UnknownValkyrieIDError
 
 if sys.version_info < (3, 15):
