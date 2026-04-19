@@ -36,3 +36,26 @@ HIMEKO:    ValkyrieID = 5
 RITA:      ValkyrieID = 7
 ELYSIA_P2: ValkyrieID = 10
 ELYSIA_P1: ValkyrieID = 22
+
+
+__all__ = [
+    "AvatarComponents",
+    "BRONYA",
+    "BattlesuitID",
+    "ELYSIA_P1",
+    "ELYSIA_P2",
+    "HIMEKO",
+    "KALLEN",
+    "KIANA",
+    "MEI",
+    "Note",
+    "PartNo",
+    "RITA",
+    "RawReplacementMap",
+    "ReplacementMap",
+    "SAKURA",
+    "SkinID",
+    "SkinRarityID",
+    "THERESA",
+    "ValkyrieID",
+]

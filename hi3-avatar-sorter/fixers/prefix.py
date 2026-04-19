@@ -25,3 +25,6 @@ class PrefixFixer(AvatarFixer):
                 return RawAvatar.from_string(fixed_string)
 
         return None
+
+
+__all__ = ["PrefixFixer"]

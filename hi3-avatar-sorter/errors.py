@@ -168,3 +168,29 @@ class UnknownSkinRarityIDError(ParsingError):
         self.id = id
 
         super().__init__(f"Unknown Skin rarity ID {id!r}.")
+
+
+__all__ = [
+    "BaseError",
+    "EmptyNoteError",
+    "EmptySourceFolderError",
+    "MissingAvatarIDError",
+    "MissingBattlesuitIDError",
+    "MissingPartIDError",
+    "MissingSkinIDError",
+    "MissingSkinRarityIDError",
+    "MissingValkyrieIDError",
+    "NonDirectoryOutputFolderError",
+    "NonDirectorySourceFolderError",
+    "NonEmptyOutputFolderError",
+    "NonNumericIDError",
+    "ParsingError",
+    "PathError",
+    "TooLongIDError",
+    "TooLongSuffixError",
+    "UnknownPartIDError",
+    "UnknownPartNoError",
+    "UnknownSkinRarityIDError",
+    "UnknownSourceFolderNameError",
+    "UnknownValkyrieIDError",
+]

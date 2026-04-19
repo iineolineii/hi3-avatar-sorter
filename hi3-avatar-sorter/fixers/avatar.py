@@ -48,3 +48,6 @@ class AvatarFixer:
                 validate=True,
                 validate_string_ids=False,
             )
+
+
+__all__ = ["AvatarFixer"]

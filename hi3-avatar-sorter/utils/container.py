@@ -89,3 +89,6 @@ class MexContainer(Generic[K, V], dict["K", "V"], metaclass=ABCMeta):
 
     def __hash__(self) -> int: # pyright: ignore[reportIncompatibleVariableOverride]
         return hash(frozenset(self.items()))
+
+
+__all__ = ["MexContainer"]

@@ -50,3 +50,6 @@ def validate_and_sort_files(folder: Path):
             print(f"\033[7m[SKIP]\033[0m {file.stem}: {str(e)}")
 
     return sorted(index_by_file.keys(), key=lambda file: index_by_file[file])
+
+
+__all__ = ["validate_and_sort_files", "validate_paths"]

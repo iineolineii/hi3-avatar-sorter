@@ -14,3 +14,6 @@ def fix_avatar_string(avatar_string: str, fixers: Iterable["AvatarFixer"]) -> "R
     for fixer in fixers:
         if fixed_string := fixer.fix(avatar_string):
             return fixed_string
+
+
+__all__ = ["fix_avatar_string"]
