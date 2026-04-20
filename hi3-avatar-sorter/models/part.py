@@ -17,6 +17,7 @@ if sys.version_info < (3, 15):
 
 @dataclass(frozen=True, slots=True)
 class Part(BaseModel):
+    id: str = field(compare=False)
     no: int = field(init=True)
     id_format: "PartIDFormats"
 
