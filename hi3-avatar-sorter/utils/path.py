@@ -1,12 +1,20 @@
+from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from ..enums import PartIDFormat
 from ..errors import (
     EmptySourceFolderError,
     NonDirectoryOutputFolderError,
     NonDirectorySourceFolderError,
     NonEmptyOutputFolderError,
-    ParsingError
+    ParsingError,
+    UnknownSourceFolderNameError
 )
+from ..fixers.avatar import RawAvatar
+
+if TYPE_CHECKING:
+    from ..maps import FORMAT_BY_FOLDER
 
 
 def validate_paths(source_folder: str | Path, output_folder: str | Path = "output") -> tuple[Path, Path]:
@@ -37,20 +45,40 @@ def validate_paths(source_folder: str | Path, output_folder: str | Path = "outpu
     return source_folder, output_folder
 
 
-def validate_and_sort_files(folder: Path):
-    index_by_file: dict[Path, int] = {}
+def validate_and_sort_files(folder: Path) -> Iterator[tuple[Path, "RawAvatar"]]:
     from ..models.avatar import RawAvatar
+    items: dict[int, tuple[Path, RawAvatar]] = {}
 
     for file in folder.iterdir():
         try:
-            index = int(RawAvatar.from_string(file.stem))
-            assert index not in index_by_file.values(), "Duplicate index"
-            index_by_file[file] = index
+            raw_avatar = RawAvatar.from_string(file.stem)
+            index = int(raw_avatar)
+
+            if index in items:
+                raise AssertionError("Duplicate index")
+
+            items[index] = (file, raw_avatar)
 
         except ParsingError as e:
-            print(f"\033[7m[SKIP]\033[0m {file.stem}: {str(e)}")
+            print(f"\033[7m[SKIP]\033[0m {file.stem}: {e}")
 
-    return sorted(index_by_file.keys(), key=lambda file: index_by_file[file])
+    return (items[index] for index in sorted(items))
 
 
-__all__ = ["validate_and_sort_files", "validate_paths"]
+def get_format_by_folder(source_folder: Path) -> "PartIDFormat":
+    try:
+        part_id_format = FORMAT_BY_FOLDER[source_folder.name]
+
+    except KeyError as e:
+        known_folder_names = {
+            repr(folder_name)
+            for folder_names in FORMAT_BY_FOLDER.keys()
+            for folder_name in folder_names
+        }
+
+        raise UnknownSourceFolderNameError(source_folder.name, known_folder_names) from e
+
+    return part_id_format
+
+
+__all__ = ["validate_paths", "validate_and_sort_files", "get_format_by_folder"]
