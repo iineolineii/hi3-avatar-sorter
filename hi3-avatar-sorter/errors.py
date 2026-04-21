@@ -1,7 +1,7 @@
 import json
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
@@ -26,31 +26,31 @@ class EmptyNoteError(ParsingError):
 
 
 class MissingAvatarIDError(ParsingError):
-    def __init__(self, raw_avatar: Any) -> None:
+    def __init__(self, raw_avatar: dict) -> None:
         self.raw_avatar = raw_avatar
 
         super().__init__(f"Raw avatar is missing Avatar ID: {raw_avatar!r}.")
 
 class MissingPartIDError(ParsingError):
-    def __init__(self, raw_avatar: Any) -> None:
+    def __init__(self, raw_avatar: dict) -> None:
         self.raw_part = raw_avatar
 
         super().__init__(f"Raw avatar is missing Part ID: {raw_avatar!r}.")
 
 class MissingValkyrieIDError(ParsingError):
-    def __init__(self, raw_avatar: Any) -> None:
+    def __init__(self, raw_avatar: dict) -> None:
         self.raw_valkyrie = raw_avatar
 
         super().__init__(f"Raw avatar is missing Valkyrie ID: {raw_avatar!r}.")
 
 class MissingBattlesuitIDError(ParsingError):
-    def __init__(self, raw_avatar: Any) -> None:
+    def __init__(self, raw_avatar: dict) -> None:
         self.raw_battlesuit = raw_avatar
 
         super().__init__(f"Raw avatar is missing Battlesuit ID: {raw_avatar!r}.")
 
 class MissingSkinRarityIDError(ParsingError):
-    def __init__(self, raw_avatar: Any) -> None:
+    def __init__(self, raw_avatar: dict) -> None:
         self.raw_avatar = raw_avatar
 
         super().__init__(
@@ -60,7 +60,7 @@ class MissingSkinRarityIDError(ParsingError):
         )
 
 class MissingSkinIDError(ParsingError):
-    def __init__(self, raw_avatar: Any) -> None:
+    def __init__(self, raw_avatar: dict) -> None:
         self.raw_avatar = raw_avatar
 
         super().__init__(
@@ -95,18 +95,13 @@ class NonEmptyOutputFolderError(PathError):
         super().__init__(f"Output folder {str(folder)!r} is not empty.")
 
 class UnknownSourceFolderNameError(PathError):
-    def __init__(self, folder_name: str, folder_names: Iterable[str]) -> None:
-        self.folder = folder_name
-        self.folder_names = folder_names
-
-        folder_names_repr = ", ".join(set(
-            repr(folder_name)
-            for folder_name in folder_names
-        ))
+    def __init__(self, folder: str | Path, known_folder_names: Iterable[str]) -> None:
+        self.folder = folder
+        self.known_folder_names = known_folder_names
 
         super().__init__(
-            f"Could not recognize Part ID format by source folder name: {folder_name!r}. "
-            f"Consider renaming it to one of the following: {folder_names_repr}. "
+            f"Could not recognize Part ID format by source folder name: {str(folder)!r}. "
+            f"Consider renaming it to one of the following: {', '.join(known_folder_names)}. "
             f"Or specify 'part_id_format' manually in the 'main' function."
         )
 
