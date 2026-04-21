@@ -5,14 +5,14 @@ from itertools import cycle
 from frozendict import frozendict
 
 from .constants import AvatarComponents, RawReplacementMap, ReplacementMap
-from ..enums import PartIDFormats
+from ..enums import PartIDFormat
 from ..models import Avatar
 from ..models.avatar import RawAvatar
 
 
 @dataclass(frozen=True, slots=True)
 class AvatarFixer:
-    part_id_format: "PartIDFormats"
+    part_id_format: "PartIDFormat"
     raw_replacement_map: "RawReplacementMap"
 
     replacement_map: "ReplacementMap" = field(init=False, repr=False)

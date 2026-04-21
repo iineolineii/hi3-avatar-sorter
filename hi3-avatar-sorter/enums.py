@@ -1,15 +1,15 @@
 from enum import IntEnum, StrEnum, auto
 
 
-class PartIDFormats(StrEnum):
+class PartIDFormat(StrEnum):
     ICON     = auto()
     SPLASH   = auto()
     FRAGMENT = auto()
 
 
-class PartNumbers(IntEnum):
+class PartNumber(IntEnum):
     PART1 = 1
     PART2 = 2
 
 
-__all__ = ["PartIDFormats", "PartNumbers"]
+__all__ = ["PartIDFormat", "PartNumber"]

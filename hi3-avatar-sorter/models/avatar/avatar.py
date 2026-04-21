@@ -12,7 +12,7 @@ from ..part import Part
 from ..skin import Skin
 from ..skin_rarity import SkinRarity
 from ..valkyrie import Valkyrie
-from ...enums import PartIDFormats, PartNumbers
+from ...enums import PartIDFormat, PartNumber
 from ...errors import EmptyNoteError, UnknownPartIDError, UnknownPartNoError
 
 if sys.version_info < (3, 15):
@@ -74,7 +74,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     # the result is computed using loops
     # and the children container is immutable.
     # Otherwise it may produce stale or misleading results.
-    def get_part_by_no(cls, part_no: int, part_id_format: PartIDFormats) -> list[Part]:
+    def get_part_by_no(cls, part_no: int, part_id_format: PartIDFormat) -> list[Part]:
         """
         Retrieve all `Part`s with the given number and ID format.
 
@@ -105,7 +105,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
 
     @classmethod
-    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormats", "PartNumbers"]]) -> None:
+    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", "PartNumber"]]) -> None:
         """
         Initialize the class-level Part map from raw Part data.
 

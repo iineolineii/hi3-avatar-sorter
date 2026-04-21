@@ -8,7 +8,7 @@ from typing import Any, ClassVar
 from .base import BaseModel
 from .battlesuit import Battlesuit
 from .valkyrie import Valkyrie
-from ..enums import PartIDFormats
+from ..enums import PartIDFormat
 from ..errors import UnknownValkyrieIDError
 
 if sys.version_info < (3, 15):
@@ -19,7 +19,7 @@ if sys.version_info < (3, 15):
 class Part(BaseModel):
     id: str = field(compare=False)
     no: int = field(init=True)
-    id_format: "PartIDFormats"
+    id_format: "PartIDFormat"
 
     valkyries: frozendict[str, tuple[Valkyrie, ...]] = field(init=False)
     id_length: ClassVar[int] = 3

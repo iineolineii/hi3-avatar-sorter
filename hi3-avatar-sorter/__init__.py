@@ -1,9 +1,12 @@
 from collections.abc import Iterable
 
-from .enums import PartIDFormats, PartNumbers
+from .enums import PartIDFormat, PartNumber
 
 
-FORMAT_BY_FOLDER: dict[Iterable[str], PartIDFormats] = {
+__vesrion__ = (0, 0, 1)
+
+
+FORMAT_BY_FOLDER: dict[Iterable[str], PartIDFormat] = {
     (
         "avatarchibiicons",
         "avataritemicon",
@@ -12,30 +15,30 @@ FORMAT_BY_FOLDER: dict[Iterable[str], PartIDFormats] = {
         "avatardressicon",
         "avatariconside",
         "dressfigures"
-    ): PartIDFormats.ICON,
+    ): PartIDFormat.ICON,
     (
         "avatarcardfigures",
         "avatarcardicons"
-    ): PartIDFormats.SPLASH,
+    ): PartIDFormat.SPLASH,
     (
         "avatarfragmentfigures",
         "avatarfragmenticons"
-    ): PartIDFormats.FRAGMENT
+    ): PartIDFormat.FRAGMENT
 }
 
-RAW_PARTS: dict[str, tuple["PartIDFormats", "PartNumbers"]] = {
-    "000": (PartIDFormats.ICON,     PartNumbers.PART1),
-    "002": (PartIDFormats.ICON,     PartNumbers.PART2),
-    "006": (PartIDFormats.SPLASH,   PartNumbers.PART1),
-    "302": (PartIDFormats.SPLASH,   PartNumbers.PART2),
-    "062": (PartIDFormats.SPLASH,   PartNumbers.PART2), # Second splash Part 2 ID is for skins found in folders avatarcardfigures and avatarcardicons
-    "001": (PartIDFormats.FRAGMENT, PartNumbers.PART1),
-    "202": (PartIDFormats.FRAGMENT, PartNumbers.PART2),
+RAW_PARTS: dict[str, tuple["PartIDFormat", "PartNumber"]] = {
+    "000": (PartIDFormat.ICON,     PartNumber.PART1),
+    "002": (PartIDFormat.ICON,     PartNumber.PART2),
+    "006": (PartIDFormat.SPLASH,   PartNumber.PART1),
+    "302": (PartIDFormat.SPLASH,   PartNumber.PART2),
+    "062": (PartIDFormat.SPLASH,   PartNumber.PART2), # Second splash Part 2 ID is for skins found in folders avatarcardfigures and avatarcardicons
+    "001": (PartIDFormat.FRAGMENT, PartNumber.PART1),
+    "202": (PartIDFormat.FRAGMENT, PartNumber.PART2),
 }
 
 
 RAW_VALKYRIES: dict[int, list[tuple[str, str, int] | tuple[str, str]]] = {
-    PartNumbers.PART1: [
+    PartNumber.PART1: [
         ("01", "Kiana Kaslana",      50), # Changed from 10 because of NOTE#1
         ("01", "Kallen Kaslana",       ),
         ("02", "Raiden Mei",         10),
@@ -69,7 +72,7 @@ RAW_VALKYRIES: dict[int, list[tuple[str, str, int] | tuple[str, str]]] = {
         ("36", "Shigure Kira",         ),
         ("37", "Sirin",                )
     ],
-    PartNumbers.PART2: [
+    PartNumber.PART2: [
         ("02", "Senadina",             ),
         ("03", "Coralie 6626 Planck",  ),
         ("04", "Erdős Helia",          ),
@@ -80,8 +83,6 @@ RAW_VALKYRIES: dict[int, list[tuple[str, str, int] | tuple[str, str]]] = {
         ("09", "Sparkle",              )
     ]
 }
-
-__vesrion__ = (0, 0, 1)
 
 __all__ = [
     "FORMAT_BY_FOLDER",

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    from .enums import PartIDFormats
+    from .enums import PartIDFormat
 
 
 class BaseError(ValueError):
@@ -150,7 +150,7 @@ class UnknownPartIDError(ParsingError):
         super().__init__(f"Unknown Part ID {id!r}.")
 
 class UnknownPartNoError(ParsingError):
-    def __init__(self, no: int, id_format: "PartIDFormats") -> None:
+    def __init__(self, no: int, id_format: "PartIDFormat") -> None:
         self.no = no
         self.id_format = id_format
 
