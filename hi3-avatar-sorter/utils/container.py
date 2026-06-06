@@ -1,12 +1,26 @@
 from abc import ABCMeta
+from collections import UserDict
 from collections.abc import Hashable
+from dataclasses import field
 from typing import Generic, TypeVar
+
+from multidict import MultiDict, MultiDictProxy
+
 
 K = TypeVar("K", bound=Hashable)
 V = TypeVar("V")
 
 
-class MexContainer(Generic[K, V], dict["K", "V"], metaclass=ABCMeta):
+class FrozenMultiDict(Generic[V], MultiDictProxy[V]):
+    def __init__(self, arg: MultiDict[V] | MultiDictProxy[V]):
+        super().__init__(arg.copy())
+        self._hash = hash(frozenset(self.items()))
+
+    def __hash__(self) -> int:
+        return self._hash
+
+
+class MexContainer(Generic[K, V], UserDict["K", "V"], metaclass=ABCMeta):
     """
     Base container that stores values based on their MEX (minimal excluded number).
     """
@@ -88,8 +102,14 @@ class MexContainer(Generic[K, V], dict["K", "V"], metaclass=ABCMeta):
 
         return super().__setitem__(key, value)
 
-    def __hash__(self) -> int: # pyright: ignore[reportIncompatibleVariableOverride]
-        return hash(frozenset(self.items()))
+mex_field = lambda *args, **kwargs: field(
+    *args,
+    **(kwargs | {
+        "default_factory": MexContainer,
+        "repr": False,
+        "hash": False
+    })
+)
 
 
-__all__ = ["MexContainer"]
+__all__ = ["FrozenMultiDict", "MexContainer", "mex_field"]
