@@ -1,8 +1,8 @@
-import sys
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass, field
-from functools import lru_cache
-from typing import Any, ClassVar, Self
+from dataclasses import InitVar, dataclass, field
+from functools import cached_property, lru_cache
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from .meta import AvatarMeta
 from .raw import RawAvatar
@@ -12,11 +12,10 @@ from ..part import Part
 from ..skin import Skin
 from ..skin_rarity import SkinRarity
 from ..valkyrie import Valkyrie
-from ...enums import PartIDFormat, PartNumber
-from ...errors import EmptyNoteError, UnknownPartIDError, UnknownPartNoError
+from ...errors import UnknownPartIDError, UnknownPartNoError
 
-if sys.version_info < (3, 15):
-    from frozendict import frozendict
+if TYPE_CHECKING:
+    from ...enums import PartIDFormat, PartNumber
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,7 +25,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
     Represents a fully assembled avatar with normalized components.
     Wraps a `RawAvatar` instance into domain objects (`Part`, `Valkyrie`,
-    `Battlesuit`, `SkinRarity`, `Skin`) and optionally formats the note.
+    `Battlesuit`, `SkinRarity`, `Skin`).
     """
     part:        Part
     valkyrie:    Valkyrie
@@ -35,12 +34,22 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     skin:        Skin       | None = None
     note:        str        | None = None
 
-    parts: ClassVar[frozendict[str, Part]]
+    parts: ClassVar[MappingProxyType[str, Part]]
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
     raw: RawAvatar = field(init=False, repr=False)
     """
     Original `RawAvatar` DTO used to construct this model.
+
+    Note:
+        This attribute is not present if the instance was not
+        created via any of the `from_<something>` factory methods.
+    """
+
+    no: int = field(init=False, repr=False)
+    """
+    Unique index of original `RawAvatar` DTO used to construct this model.
+    Should always be equal to its integer representation.
 
     Note:
         This attribute is not present if the instance was not
@@ -74,7 +83,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     # the result is computed using loops
     # and the children container is immutable.
     # Otherwise it may produce stale or misleading results.
-    def get_part_by_no(cls, part_no: int, part_id_format: PartIDFormat) -> list[Part]:
+    def get_part_by_no(cls, part_no: "PartNumber", part_id_format: "PartIDFormat") -> list[Part]:
         """
         Retrieve all `Part`s with the given number and ID format.
 
@@ -82,7 +91,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             part_no (`int`):
                 Part number.
 
-            part_id_format (`PartIDFormat`):
+            part_id_format (`"PartIDFormat"`):
                 Format of the Part ID.
 
         Raises:
@@ -105,22 +114,26 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
 
     @classmethod
-    def build_part_map(cls, raw_parts: dict[str, tuple["PartIDFormat", "PartNumber"]]) -> None:
+    def build_parts_map(cls, raw_parts: dict[str, tuple["PartIDFormat", "PartNumber"]]) -> MappingProxyType[str, "Part"]:
         """
-        Initialize the class-level Part map from raw Part data.
+        Build a read-only mapping of Part IDs to their :class:`Part` instances.
 
-        Args:
-            raw_parts (`dict[str, tuple[PartIDFormat, PartNumbers]]`):
-                Mapping from Part ID to a tuple of (Part ID format, Part number).
+        :param raw_parts: Source mapping from Part ID to a tuple containing Part ID format and Part number.
+        :type raw_parts: dict[str, tuple[:class:`PartIDFormat`, :class:`PartNumber`]]
+
+        :return: Read-only mapping of Part IDs to their :class:`Part` instances.
+        :rtype: MappingProxyType[str, :class:`Part`]
         """
-        cls.parts = frozendict({
+        cls.parts = MappingProxyType({
             id: Part(id=id, no=no, id_format=id_format)
             for id, (id_format, no) in raw_parts.items()
         })
 
+        return cls.parts
+
 
     @classmethod
-    def from_raw(cls, raw: RawAvatar) -> Self:
+    def from_raw(cls, raw: "RawAvatar", index: int | None = None) -> "Self":
         """
         Construct an `Avatar` from a `RawAvatar` instance.
 
@@ -141,7 +154,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         else:
             skin_rarity = skin = None
 
-        note = cls.validate_note(raw.note) if raw.note is not None else None
+        note = RawAvatar.validate_note(raw.note) if raw.note is not None else None
 
         self = cls(
             id=raw.id,
@@ -153,11 +166,12 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
             note=note
         )
         object.__setattr__(self, "raw", raw)
+        object.__setattr__(self, "no", int(raw))
         return self
 
 
     @classmethod
-    def from_string(cls, string: str) -> Self:
+    def from_string(cls, string: str) -> "Self":
         """
         Construct an `Avatar` from a string representation.
 
@@ -186,34 +200,9 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         return cls.from_raw(RawAvatar.from_iterable(iterable))
 
 
-    @classmethod
-    def validate_note(cls, note: str | None) -> str:
-        """
-        Normalize and validate given note string.
-
-        Args:
-            note (`str | None`):
-                Raw note.
-
-        Raises:
-            `EmptyNoteError`:
-                If the note is empty or `None`.
-
-        Returns:
-            `str`: Formatted note.
-        """
-        if not note:
-            raise EmptyNoteError(note)
-
-        if note.lower() == "b":
-            note = "Veliona"
-
-        return note.capitalize()
-
-
     def __getattribute__(self, name: str) -> Any:
         try:
-            return super().__getattribute__(name)
+            return BaseModel.__getattribute__(self, name)
 
         except AttributeError:
             class_name = type(self).__name__
@@ -248,7 +237,8 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         if self.skin_rarity is not None and self.skin is not None:
             result += f"{self.skin_rarity.id:02}{self.skin.no:02}"
         else:
-            result += "0000"
+            result += "0" * SkinRarity.id_length
+            result += "0" * Skin.id_length
 
         return int(result)
 
@@ -262,17 +252,25 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         if self.note:
             result += f"_{self.note}"
 
-        return result
+        return result.lower().lstrip("0")
 
     def __str__(self) -> str:
         # Example: Raiden Mei №3, Skin 4★ №5, Special
-        result = f"{self.valkyrie} {self.battlesuit}"
+        result = f"{self.valkyrie.name} №{self.battlesuit.no}"
 
         if self.skin_rarity is not None and self.skin is not None:
-            result += f", Skin {self.skin_rarity} {self.skin}"
+            result += f", Skin {self.skin_rarity.no}★ №{self.skin.no}"
 
         if self.note:
-            result += f", {self.note}"
+            note = self.note.capitalize()
+
+            if note == "B":
+                note = "Veliona"
+
+            elif note == "Shadowicon":
+                note = "ShadowIcon"
+
+            result += f", {note}"
 
         return result
 

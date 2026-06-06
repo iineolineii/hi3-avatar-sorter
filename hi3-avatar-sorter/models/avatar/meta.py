@@ -18,7 +18,7 @@ class AvatarMeta(ABCMeta):
                 raise AttributeError(
                     base_message +
                     f" Perhaps you forgot to call the "
-                    f"{cls.build_part_map.__qualname__!r} method?"
+                    f"{cls.build_parts_map.__qualname__!r} method?"
                 )
 
             raise

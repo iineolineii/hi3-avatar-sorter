@@ -4,13 +4,13 @@ from typing import ClassVar
 
 from .base import BaseModel
 from .skin import Skin
-from ..utils.container import MexContainer
 from ..errors import UnknownSkinRarityIDError
+from ..utils import MexContainer, capitalize, mex_field
 
 
 @dataclass(frozen=True, slots=True)
 class SkinRarity(BaseModel):
-    skins: "MexContainer[str, Skin]" = field(default_factory=MexContainer) # pyright: ignore[reportAssignmentType]
+    skins: "MexContainer[str, Skin]" = mex_field()
     valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
 
     def add_skin(self, skin: "Skin") -> "Skin":
@@ -23,7 +23,7 @@ class SkinRarity(BaseModel):
 
     @classmethod
     def validate_id(cls, id: str) -> str:
-        id = super().validate_id(id)
+        id = BaseModel.validate_id.__func__(cls, id)
 
         if id not in cls.valid_ids:
             raise UnknownSkinRarityIDError(id)
@@ -34,7 +34,7 @@ class SkinRarity(BaseModel):
         return int(self.id)
 
     def __str__(self) -> str:
-        return f"{int(self)}★"
+        return f"{capitalize(type(self).__name__)} {int(self)}★"
 
 
 __all__ = ["SkinRarity"]

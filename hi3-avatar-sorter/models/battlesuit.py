@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 
 from .base import BaseModel
 from .skin_rarity import SkinRarity
-from ..utils.container import MexContainer
+from ..utils import MexContainer, mex_field
 
 
 @dataclass(frozen=True, slots=True)
 class Battlesuit(BaseModel):
-    skin_rarities: "MexContainer[str, SkinRarity]" = field(default_factory=MexContainer) # pyright: ignore[reportAssignmentType]
+    skin_rarities: "MexContainer[str, SkinRarity]" = mex_field()
 
     def add_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
         self.skin_rarities[skin_rarity.id] = skin_rarity
