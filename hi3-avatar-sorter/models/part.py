@@ -9,7 +9,7 @@ from .base import BaseModel
 from .battlesuit import Battlesuit
 from .valkyrie import MAX_BATTLESUIT_ID, Valkyrie
 from ..errors import UnknownPartIDError, UnknownValkyrieIDError
-from ..maps import RAW_PART_MAP
+from ..maps import RAW_PARTS_MAP
 from ..utils import FrozenMultiDict
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class Part(BaseModel):
     def validate_id(cls, id: str) -> str:
         id = BaseModel.validate_id.__func__(cls, id)
 
-        if id not in RAW_PART_MAP:
+        if id not in RAW_PARTS_MAP:
             raise UnknownPartIDError(id)
 
         return id

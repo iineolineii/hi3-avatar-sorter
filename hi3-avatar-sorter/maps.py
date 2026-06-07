@@ -23,7 +23,7 @@ FORMAT_BY_FOLDER: dict[Iterable[str], PartIDFormat] = {
     ): PartIDFormat.FRAGMENT
 }
 
-RAW_PART_MAP: dict[str, tuple["PartIDFormat", "PartNumber"]] = {
+RAW_PARTS_MAP: dict[str, tuple["PartIDFormat", "PartNumber"]] = {
     "000": (PartIDFormat.ICON,     PartNumber.PART1),
     "002": (PartIDFormat.ICON,     PartNumber.PART2),
     "006": (PartIDFormat.SPLASH,   PartNumber.PART1),
@@ -34,7 +34,7 @@ RAW_PART_MAP: dict[str, tuple["PartIDFormat", "PartNumber"]] = {
 }
 
 
-RAW_VALKYRIE_MAP: dict[PartNumber, list[tuple[str, str, int] | tuple[str, str]]] = {
+RAW_VALKYRIES_MAP: dict[PartNumber, list[tuple[str, str, int] | tuple[str, str]]] = {
     PartNumber.PART1: [
         ("01", "Kiana Kaslana",      50), # Changed from 10 because of NOTE#1
         ("01", "Kallen Kaslana",       ),
