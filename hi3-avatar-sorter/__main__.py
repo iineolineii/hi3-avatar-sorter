@@ -1,31 +1,15 @@
-from collections.abc import Iterable
 from pathlib import Path
 
-from . import RAW_PART1_VALKYRIES, RAW_PART2_VALKYRIES, RAW_PARTS, PartIDFormat
-from .errors import ParsingError, UnknownSourceFolderNameError
-from .models import Avatar
-from .utils import validate_and_sort_files, validate_paths
-
-
-format_by_folder: dict[Iterable[str], PartIDFormat] = {
-    (
-        "avatarchibiicons",
-        "avataritemicon",
-        "avataricon",
-        "dressicons",
-        "avatardressicon",
-        "avatariconside",
-        "dressfigures"
-    ): "short",
-    (
-        "avatarcardfigures",
-        "avatarcardicons"
-    ): "long",
-    (
-        "avatarfragmentfigures",
-        "avatarfragmenticons"
-    ): "fragment"
-}
+from .enums import PartIDFormat
+from .maps import RAW_PARTS_MAP, RAW_VALKYRIES_MAP
+from .models.avatar import Avatar
+from .utils import (
+    build_avatars_map,
+    build_fixers_map,
+    build_raw_avatars_map,
+    get_format_by_folder,
+    validate_paths
+)
 
 
 def main(
@@ -36,37 +20,18 @@ def main(
     source_folder, output_folder = validate_paths(source_folder, output_folder)
 
     if part_id_format is None:
-        try:
-            part_id_format = format_by_folder[source_folder.name]
-        except KeyError as e:
-            raise UnknownSourceFolderNameError(source_folder.name, (
-                folder_name
-                for folder_names in format_by_folder.keys()
-                for folder_name in folder_names
-            ))
+        part_id_format = get_format_by_folder(source_folder)
 
-    Avatar.build_part_map(RAW_PARTS)
+    Avatar.build_parts_map(RAW_PARTS_MAP)
+    for part_no, raw_valkyries in RAW_VALKYRIES_MAP.items():
+        for part in Avatar.get_part_by_no(part_no, part_id_format):
+            part.build_valkyries_map(raw_valkyries)
 
-    PART1 = Avatar.get_part(1, part_id_format)
-    PART1.build_valkyrie_map(RAW_PART1_VALKYRIES)
+    fixers_map = build_fixers_map(part_id_format)
 
-    PART2 = Avatar.get_part(2, part_id_format)
-    PART2.build_valkyrie_map(RAW_PART2_VALKYRIES)
-
-    sorted_files = validate_and_sort_files(source_folder)
-
-    for file in sorted_files:
-        if not file.is_file():
-            continue
-
-        try:
-            avatar = Avatar.from_string(file.stem)
-        except ParsingError as e:
-            print(f"\033[7m[SKIP]\033[0m {file.stem}: {str(e)}")
-        else:
-            print(f"{file.stem}:")
-            print(avatar)
+    raw_avatars_map = build_raw_avatars_map(source_folder, part_id_format, fixers_map)
+    avatars_map = build_avatars_map(raw_avatars_map)
 
 
-if __name__ != "__main__":
+if __name__ == "__main__":
     main(input("Enter source folder path: "))
