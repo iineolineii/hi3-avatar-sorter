@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .base import BaseModel
 from .skin_rarity import SkinRarity
