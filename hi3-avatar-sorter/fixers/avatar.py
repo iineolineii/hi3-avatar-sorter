@@ -1,8 +1,7 @@
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from itertools import cycle
-
-from frozendict import frozendict
+from types import MappingProxyType
 
 from .constants import AvatarComponents, RawReplacementMap, ReplacementMap
 from ..enums import PartIDFormat
@@ -19,7 +18,7 @@ class AvatarFixer:
 
     def __post_init__(self) -> None:
         replacement_map = self.build_replacement_map(self.raw_replacement_map)
-        object.__setattr__(self, "replacement_map", frozendict(replacement_map))
+        object.__setattr__(self, "replacement_map", MappingProxyType(replacement_map))
 
     def fix(self, avatar_string: str) -> "RawAvatar | None":
         return self.replacement_map.get(avatar_string)
@@ -32,7 +31,7 @@ class AvatarFixer:
             fixed_dtos = cycle(self.dto_from_components(fixed_components))
 
             for malformed_dto, fixed_dto in zip(malformed_dtos, fixed_dtos):
-                malformed_string = str(malformed_dto).lstrip("0")
+                malformed_string = str(malformed_dto)
                 replacement_map[malformed_string] = fixed_dto
 
         return replacement_map
@@ -46,7 +45,6 @@ class AvatarFixer:
 
             yield RawAvatar.from_iterable(
                 normalized_components,
-                validate=True,
                 validate_string_ids=False
             )
 
