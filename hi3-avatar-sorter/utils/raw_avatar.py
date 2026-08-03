@@ -172,7 +172,7 @@ class RawAvatar:
     def from_components(
         cls,
         components: Iterable[int | str],
-        validate_string_ids: bool = True
+        preserve_strings: bool = False
     ) -> Self:
         items = list(components)
 
@@ -199,7 +199,7 @@ class RawAvatar:
             if value is None:
                 return None
 
-            if not validate_string_ids and isinstance(value, str):
+            if preserve_strings and isinstance(value, str):
                 preserved_fields[name] = value
                 return ""
 
@@ -218,7 +218,7 @@ class RawAvatar:
 
         validated = raw.validated()
 
-        if not validate_string_ids:
+        if not preserve_strings:
             return replace(validated, **preserved_fields)
 
         return validated
