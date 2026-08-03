@@ -1,9 +1,9 @@
-from dataclasses import field
+from dataclasses import InitVar, field
 from typing import TYPE_CHECKING
 
-from mixins import HasChildren
-
-from .base import BaseModel
+from . import BaseModel
+from .base import MAX_MODEL_ID
+from ..mixins import HasChildren
 
 if TYPE_CHECKING:
     from .battlesuit import Battlesuit
@@ -11,9 +11,16 @@ if TYPE_CHECKING:
 
 class Valkyrie(BaseModel, HasChildren["Battlesuit"]):
     name: str
-    no: int = field(init=True)
+    max_child_id: InitVar[int] = MAX_MODEL_ID
+    children_id_range: range = field(init=False)
 
-    children_id_range: range = range(0, MAX_BATTLESUIT_ID)
+    def __post_init__(self, max_child_id: int) -> None:
+        super().__post_init__()
+        self._update_children_id_range(end=max_child_id)
+
+    def _update_children_id_range(self, *, start: int = 0, end: int = MAX_MODEL_ID) -> None:
+        children_id_range = range(start, end)
+        object.__setattr__(self, "children_ID_range", children_id_range)
 
     def __str__(self) -> str:
         return self.name
