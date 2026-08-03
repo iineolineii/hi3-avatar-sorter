@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from . import BaseModel
 from ..mixins import HasChildren
-from ..utils import capitalize
+from ..utils import title_case
 
 if TYPE_CHECKING:
     from . import Skin
@@ -15,7 +15,7 @@ class SkinRarity(BaseModel, HasChildren["Skin"]):
         return int(self.id)
 
     def __str__(self) -> str:
-        return f"{capitalize(type(self).__name__)} {int(self)}★"
+        return f"{title_case(type(self).__name__)} {int(self)}★"
 
 
 __all__ = ["SkinRarity"]

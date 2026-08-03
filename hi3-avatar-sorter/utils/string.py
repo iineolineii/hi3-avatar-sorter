@@ -1,4 +1,5 @@
 import re
+import string
 from collections.abc import Collection, Sequence
 from typing import TYPE_CHECKING
 
@@ -8,14 +9,77 @@ if TYPE_CHECKING:
     from ..models.avatar import RawAvatar
 
 
-def snake_case(text: str) -> str:
-    # Source: https://www.w3resource.com/python-exercises/string/python-data-type-string-exercise-97.php
-    # License: CC BY 4.0
-    return "_".join(
-        re.sub("([A-Z][a-z]+)",
-        r" \1",
-        re.sub("([A-Z]+)", r" \1",
-        text.replace("-", " ."))).split()).lower()
+DELIMITERS = " -_"
+PUNCTUATION = "".join(
+    character
+    for character in string.punctuation
+    if character not in DELIMITERS
+)
+
+
+def title_case(string: str):
+    """
+    Convert a string to title case.
+
+    Example:
+        Hello world => Hello World
+        hello-world => Hello World
+        helloWorld => Hello World
+
+    Note:
+        - This function was adapted from `caseconverter.titlecase`
+
+        - Source: https://github.com/chrisdoherty4/python-case-converter/blob/master/caseconverter/title.py
+
+        - Copyright (c) Chris Doherty and Contributors
+
+        - Licensed under the MIT License.
+    """
+
+    string = string.strip(DELIMITERS)
+
+    # Strip punctuation
+    string = re.sub("[{}]+".format(re.escape(PUNCTUATION)), "", string)
+
+    # Change recurring delimiters into single delimiters.
+    string = re.sub("[{}]+".format(re.escape(DELIMITERS)), DELIMITERS[0], string)
+
+    if not string:
+        return ""
+
+    if string.isupper():
+        string = string.lower()
+
+    chars = iter(string)
+    result = next(chars).upper()
+
+    # Previous character and current character
+    previous = None
+    character = next(chars)
+
+    while character:
+        # On delimiters, write the space and make the next character uppercase
+        if character in DELIMITERS:
+            result += " "
+            result += next(chars).upper()
+
+        # Handle camelCase -> Title Case
+        elif (
+            previous is not None
+            and previous.isalpha()
+            and previous.islower()
+            and character.isupper()
+        ):
+            result += " "
+            result += character
+
+        else:
+            result += character.lower()
+
+        previous = character
+        character = next(chars, "")
+
+    return result
 
 
 def fix_avatar_string(avatar_string: str, fixers: dict[str, "AvatarFixer"]) -> "tuple[str, RawAvatar] | None":
@@ -64,10 +128,6 @@ def build_fixers_map(part_id_format: "PartIDFormat") -> dict[str, "AvatarFixer"]
     # print(json.dumps(fixers["wrong Battlesuit ID"].replacement_map, cls=DataclassEncoder, indent=4))
 
     return fixers
-
-
-def capitalize(string: str):
-    return snake_case(string).replace("_", " ").strip().capitalize()
 
 
 def _compute_stats(

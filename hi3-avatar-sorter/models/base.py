@@ -2,7 +2,7 @@ from dataclasses import Field, dataclass, field
 from typing import Any, ClassVar, dataclass_transform
 
 from ..errors import NonNumericIDError, TooLongIDError, UnknownIDError
-from ..utils import capitalize
+from ..utils import title_case
 
 MISSING = 0
 
@@ -64,7 +64,7 @@ class BaseModel(metaclass=_BaseModelMeta):
         return self.no
 
     def __str__(self) -> str:
-        return f"{capitalize(type(self).__name__)} №{int(self)}"
+        return f"{title_case(type(self).__name__)} №{int(self)}"
 
     def __hash__(self) -> int:
         return hash((self.id, self.no))
