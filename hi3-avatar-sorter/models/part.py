@@ -100,36 +100,11 @@ class Part(BaseModel):
 
             yield Valkyrie(
                 id=id, no=no, name=name,
-                battlesuit_id_range=range(start, end)
+                children_id_range=range(start, end)
             )
 
             # Current end will be the next start for the current ID
             range_starts[id] = end
-
-
-    def __getattribute__(self, name: str) -> Any:
-        try:
-            return BaseModel.__getattribute__(self, name)
-
-        except AttributeError:
-            class_name = type(self).__name__
-            base_message = f"{class_name!r} object has no attribute '{name}'. "
-
-            if name == "no":
-                raise AttributeError(
-                    base_message +
-                    f"Perhaps it was created without using the "
-                    f"'build_part_map' factory method?"
-                )
-
-            if name == "valkyries":
-                raise AttributeError(
-                    base_message +
-                    f"Perhaps you forgot to call "
-                    f"'build_valkyrie_map' method?"
-                )
-
-            raise
 
 
 __all__ = ["Part"]

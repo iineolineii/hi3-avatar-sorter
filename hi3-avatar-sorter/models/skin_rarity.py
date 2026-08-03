@@ -1,25 +1,19 @@
 from collections.abc import Iterable
-from dataclasses import dataclass, field
-from typing import ClassVar
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, ClassVar
 
 from .base import BaseModel
-from .skin import Skin
 from ..errors import UnknownSkinRarityIDError
-from ..utils import MexContainer, capitalize, mex_field
+from ..mixins import HasChildren
+from ..utils import capitalize
+
+if TYPE_CHECKING:
+    from . import Skin
 
 
 @dataclass(frozen=True, slots=True)
-class SkinRarity(BaseModel):
-    skins: "MexContainer[str, Skin]" = mex_field()
+class SkinRarity(BaseModel, HasChildren["Skin"]):
     valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
-
-    def add_skin(self, skin: "Skin") -> "Skin":
-        self.skins[skin.id] = skin
-        return skin
-
-    def get_or_add_skin(self, skin: "Skin") -> "Skin":
-        return self.skins.setdefault(skin.id, skin)
-
 
     @classmethod
     def validate_id(cls, id: str) -> str:

@@ -1,20 +1,14 @@
 from dataclasses import dataclass
 
+from mixins import HasChildren
+
+from . import SkinRarity
 from .base import BaseModel
-from .skin_rarity import SkinRarity
-from ..utils import MexContainer, mex_field
 
 
 @dataclass(frozen=True, slots=True)
-class Battlesuit(BaseModel):
-    skin_rarities: "MexContainer[str, SkinRarity]" = mex_field()
-
-    def add_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        self.skin_rarities[skin_rarity.id] = skin_rarity
-        return skin_rarity
-
-    def get_or_add_skin_rarity(self, skin_rarity: "SkinRarity") -> "SkinRarity":
-        return self.skin_rarities.setdefault(skin_rarity.id, skin_rarity)
+class Battlesuit(BaseModel, HasChildren["SkinRarity"]):
+    pass
 
 
 __all__ = ["Battlesuit"]

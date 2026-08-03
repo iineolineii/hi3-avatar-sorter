@@ -211,6 +211,14 @@ class UnknownSkinRarityIDError(ParsingError):
 
         return super().__init__(f"Unknown Skin rarity ID {id!r}.")
 
+class InvalidChildNumberError(BaseError):
+    def __init__(self, class_name: str, child_no: int) -> None:
+        super().__init__(f"Child number {child_no} is not positive.")
+
+class DuplicateChildNumberError(BaseError):
+    def __init__(self, class_name: str, child_no: int) -> None:
+        super().__init__(f"Child number {child_no} is already occupied.")
+
 
 __all__ = [
     "BaseError",
