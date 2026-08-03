@@ -1,14 +1,14 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass, replace
 from typing import Any, ClassVar, Self, overload
 
-from ..base import BaseModel
-from ..battlesuit import Battlesuit
-from ..part import Part
-from ..skin import Skin
-from ..skin_rarity import SkinRarity
-from ..valkyrie import Valkyrie
-from ...errors import (
+from ..models.base import BaseModel
+from ..models.battlesuit import Battlesuit
+from ..models.part import Part
+from ..models.skin import Skin
+from ..models.skin_rarity import SkinRarity
+from ..models.valkyrie import Valkyrie
+from ..errors import (
     EmptyNoteError,
     MissingAvatarIDError,
     MissingBattlesuitIDError,
@@ -63,12 +63,12 @@ class RawAvatar:
         return BaseModel.validate_id.__func__(cls, id)
 
     @staticmethod
-    def _validate_note(note: str | None) -> str:
+    def _validate_note(note: Any) -> str:
         """
         Normalize and validate given note string.
 
         Args:
-            note (`str | None`):
+            note (`Any`):
                 Raw note.
 
         Raises:
@@ -157,12 +157,12 @@ class RawAvatar:
         Returns:
             `Self`: Parsed raw avatar.
         """
-        parts = string.split("_", maxsplit=3)
+        components = string.split("_", maxsplit=3)
 
-        if not parts:
+        if not components or not components[0]:
             raise MissingAvatarIDError(string)
 
-        avatar_id, *suffix = parts
+        avatar_id, *suffix = components
         part_id, valkyrie_id, battlesuit_id = cls._parse_id(avatar_id)
         skin_rarity_id, skin_id, note = cls._parse_suffix(suffix)
 
@@ -250,55 +250,70 @@ class RawAvatar:
         return part_id, valkyrie_id, battlesuit_id
 
     @classmethod
-    def _parse_suffix(cls, suffix: Iterable[str]) -> (
+    def _parse_suffix(
+        cls,
+        suffix: Sequence[int | str]
+    ) -> (
         tuple[None, None, None] |
         tuple[None, None, str ] |
         tuple[str,  str,  None] |
         tuple[str,  str,  str ]
     ):
         """
-        Parse `skin_rarity_id`, `skin_id`, and `note` from the optional suffix of a raw input data.
+        Parse `skin_rarity_ID`, `skin_ID`, and `note` from the optional suffix of a raw input data.
 
-        Args:
-            suffix (`Iterable[str]`):
-                Remaining input data components after the Avatar ID.
+        :param suffix: Remaining input data components following the Avatar ID.
+        :type suffix: Sequence[int | str]
 
-        Raises:
-            `TooLongSuffixError`:
-                If the suffix contains more than three elements.
+        :return:
+            A tuple depending on the contents of the suffix:
 
-        Returns:
-            - `tuple[None, None, None]`: If the suffix is empty.
+            - (`None`, `None`, `None`):
+                If the suffix is empty.
 
-            - `tuple[None, None, str ]`: If the suffix contains only `note`.
+            - (`None`, `None`, `str`):
+                If the suffix contains only `note`.
 
-            - `tuple[str, str, None]`: If the suffix contains `skin_rarity_id` and `skin_id` without `note`.
+            - (`str`, `str`, `None`):
+                If the suffix contains `skin_rarity_ID` and `skin_ID` without `note`.
 
-            - `tuple[str, str, str ]`: If the suffix contains `skin_rarity_id`, `skin_id`, and `note`.
+            - (`str`, `str`, `str`):
+                If the suffix contains `skin_rarity_ID`, `skin_ID`, and `note`.
+
+        :rtype:
+            tuple[None, None, None] |
+            tuple[None, None, str ] |
+            tuple[str,  str,  None] |
+            tuple[str,  str,  str ]
         """
-        skin_rarity_id: str | None = None
-        skin_id:        str | None = None
-        note:           str | None = None
-
-        suffix = list(suffix)
+        skin_rarity_id: int | str | None = None
+        skin_id:        int | str | None = None
+        note:           int | str | None = None
 
         match suffix:
             case [skin_rarity_id, skin_id, note]:
-                pass
+                skin_rarity_id = SkinRarity._validate_id(skin_rarity_id)
+                skin_id = Skin._validate_id(skin_id)
+                note = cls._validate_note(note)
+
+                return (skin_rarity_id, skin_id, note)
 
             case [skin_rarity_id, skin_id]:
-                pass
+                skin_rarity_id = SkinRarity._validate_id(skin_rarity_id)
+                skin_id = Skin._validate_id(skin_id)
+
+                return (skin_rarity_id, skin_id, note)
 
             case [note]:
-                pass
+                note = cls._validate_note(note)
+
+                return (skin_rarity_id, skin_id, note)
 
             case []:
-                pass
+                return (skin_rarity_id, skin_id, note)
 
             case _:
                 raise TooLongSuffixError(suffix)
-
-        return skin_rarity_id, skin_id, note # pyright: ignore[reportReturnType]
 
 
     def __repr__(self) -> str:
