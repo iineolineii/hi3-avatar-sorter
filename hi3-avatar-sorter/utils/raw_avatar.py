@@ -20,9 +20,6 @@ from ...errors import (
 )
 
 
-known_notes: dict[str, int] = {}
-
-
 @dataclass(frozen=True, slots=True)
 class RawAvatar:
     """
@@ -40,6 +37,7 @@ class RawAvatar:
     note:           str | None = None
 
     fixed: bool = False
+    known_notes: ClassVar[dict[str, int]] = {}
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
     @property
@@ -85,8 +83,8 @@ class RawAvatar:
 
         note = note.lower()
 
-        if note not in known_notes:
-            known_notes[note] = len(known_notes)
+        if note not in RawAvatar.known_notes:
+            RawAvatar.known_notes[note] = len(RawAvatar.known_notes)
 
         return note
 
@@ -327,7 +325,7 @@ class RawAvatar:
             result += "0" * Skin.id_length
 
         if self.note is not None:
-            note_index = known_notes[self.note]
+            note_index = RawAvatar.known_notes[self.note]
             result += str(note_index+1)
         else:
             result += "0"
