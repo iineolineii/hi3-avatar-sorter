@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
 from .base import BaseModel
@@ -11,7 +10,6 @@ if TYPE_CHECKING:
     from . import Skin
 
 
-@dataclass(frozen=True, slots=True)
 class SkinRarity(BaseModel, HasChildren["Skin"]):
     valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
 

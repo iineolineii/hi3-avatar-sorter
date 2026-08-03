@@ -1,12 +1,13 @@
-from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from mixins import HasChildren
+from . import BaseModel
+from ..mixins import HasChildren
 
-from . import SkinRarity
-from .base import BaseModel
+if TYPE_CHECKING:
+    from .skin_rarity import SkinRarity
 
 
-@dataclass(frozen=True, slots=True)
+
 class Battlesuit(BaseModel, HasChildren["SkinRarity"]):
     pass
 

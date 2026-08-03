@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import field
 from typing import TYPE_CHECKING
 
 from mixins import HasChildren
@@ -11,7 +11,6 @@ if TYPE_CHECKING:
 
 MAX_BATTLESUIT_ID = 100
 
-@dataclass(frozen=True, slots=True)
 class Valkyrie(BaseModel, HasChildren["Battlesuit"]):
     name: str
     no: int = field(init=True)

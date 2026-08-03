@@ -1,28 +1,22 @@
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass, field
-from functools import lru_cache
-from typing import TYPE_CHECKING, Any, ClassVar
-
-from multidict import MultiDict
+from dataclasses import field
+from typing import TYPE_CHECKING, ClassVar
 
 from .base import BaseModel
-from .battlesuit import Battlesuit
 from .valkyrie import MAX_BATTLESUIT_ID, Valkyrie
-from ..errors import UnknownPartIDError, UnknownValkyrieIDError
+from ..errors import UnknownPartIDError
 from ..maps import RAW_PARTS_MAP
-from ..utils import FrozenMultiDict
+from ..mixins import HasChildren
 
 if TYPE_CHECKING:
     from ..enums import PartIDFormat, PartNumber
 
 
-@dataclass(frozen=True, slots=True)
-class Part(BaseModel):
+class Part(BaseModel, HasChildren["Valkyrie"]):
     id: str = field(compare=False)
     no: "PartNumber" = field(init=True)
     id_format: "PartIDFormat"
 
-    valkyries: "FrozenMultiDict[Valkyrie]" = field(init=False, repr=False)
     id_length: ClassVar[int] = 3
 
     @classmethod
@@ -34,44 +28,17 @@ class Part(BaseModel):
 
         return id
 
-    @lru_cache # Add caching according to NOTE#2
-    def get_valkyrie(self, valkyrie_id: str, battlesuit_id: str) -> "Valkyrie":
-        numeric_battlesuit_id = int(Battlesuit.validate_id(battlesuit_id))
-
-        try:
-            valkyries = self.valkyries.getall(valkyrie_id)
-        except KeyError as e:
-            raise UnknownValkyrieIDError(valkyrie_id, battlesuit_id, self.no) from e
-
-        for valkyrie in valkyries:
-            if numeric_battlesuit_id in valkyrie.battlesuit_id_range:
-                return valkyrie
-
-        raise UnknownValkyrieIDError(valkyrie_id, battlesuit_id, self.no)
-
-
-    def build_valkyries_map(self, raw_valkyries: Iterable[tuple[str, str, int] | tuple[str, str]]) -> "FrozenMultiDict[Valkyrie]":
+    def build_valkyries_map(self, raw_valkyries: Iterable[tuple[str, str, int] | tuple[str, str]]):
         """
-        Build a read-only multi-mapping of Valkyrie IDs
-        to their :class:`Valkyrie` instances,
-        allowing multiple valkyries to share the same ID.
+        Add all children parsed from the raw Valkyrie data.
 
         :param raw_valkyries: The raw Valkyrie data. \
         Iterable of tuples containing Valkyrie's ID, \
         name, and, optionally, maximum :class:`Battlesuit` ID.
         :type raw_valkyries: Iterable[tuple[str, str, int] | tuple[str, str]]
-
-        :return: Read-only multi-mapping of Valkyrie IDs to their :class:`Valkyrie` instances.
-        :rtype: :class:`FrozenMultiDict` [:class:`Valkyrie`]
         """
-        valkyrie_map: "MultiDict[Valkyrie]" = MultiDict()
-
-        # Group Valkyries with the same ID
         for valkyrie in self._parse_raw_valkyries(raw_valkyries):
-            valkyrie_map.add(valkyrie.id, valkyrie)
-
-        object.__setattr__(self, "valkyries", FrozenMultiDict(valkyrie_map))
-        return self.valkyries
+            self.add_child(valkyrie)
 
     def _parse_raw_valkyries(self, raw_valkyries: Iterable[tuple[str, str, int] | tuple[str, str]]) -> "Iterator[Valkyrie]":
         """
