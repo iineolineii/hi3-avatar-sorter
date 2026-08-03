@@ -7,7 +7,6 @@ if TYPE_CHECKING:
     from .skin_rarity import SkinRarity
 
 
-
 class Battlesuit(BaseModel, HasChildren["SkinRarity"]):
     pass
 

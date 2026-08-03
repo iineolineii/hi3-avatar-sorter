@@ -1,4 +1,5 @@
-from enum import IntEnum, StrEnum, auto
+from enum import StrEnum, auto
+from typing import Any
 
 
 class PartIDFormat(StrEnum):
@@ -7,9 +8,4 @@ class PartIDFormat(StrEnum):
     FRAGMENT = auto()
 
 
-class PartNumber(IntEnum):
-    PART1 = 1
-    PART2 = 2
-
-
-__all__ = ["PartIDFormat", "PartNumber"]
+__all__ = ["PartIDFormat"]

@@ -9,8 +9,6 @@ if TYPE_CHECKING:
     from .battlesuit import Battlesuit
 
 
-MAX_BATTLESUIT_ID = 100
-
 class Valkyrie(BaseModel, HasChildren["Battlesuit"]):
     name: str
     no: int = field(init=True)

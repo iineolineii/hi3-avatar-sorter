@@ -5,7 +5,8 @@ from ..errors import NonNumericIDError, TooLongIDError, UnknownIDError
 from ..utils import title_case
 
 MISSING = 0
-
+MAX_MODEL_ID = 99
+DEFAULT_VALID_IDS = set(map(str, range(MAX_MODEL_ID)))
 
 @dataclass_transform(
     eq_default=True,
@@ -31,7 +32,7 @@ class BaseModel(metaclass=_BaseModelMeta):
     id: str
 
     id_length: ClassVar[int] = 2
-    valid_ids: ClassVar[set[str]] = set()
+    valid_ids: ClassVar[set[str]] = DEFAULT_VALID_IDS
     __dataclass_fields__: ClassVar[dict[str, Field]] = {}
 
     def __init_subclass__(cls) -> None:
