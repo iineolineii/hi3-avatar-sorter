@@ -1,4 +1,4 @@
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import asdict, dataclass, replace
 from functools import partial
 from typing import Any, ClassVar, Self, overload
@@ -19,6 +19,7 @@ from ..errors import (
     MissingValkyrieIDError,
     TooLongSuffixError
 )
+from ..registry import AvatarRegistry
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,41 +167,26 @@ class RawAvatar:
     def from_components(
         cls,
         components: Iterable[int | str],
+        registry: "AvatarRegistry",
+        *,
         preserve_strings: bool = False
-    ) -> Self:
-        items = list(components)
+    ) -> Iterator["RawAvatar"]:
+        part_no, valkyrie_id, battlesuit_id, *suffix = components
+        skin_rarity_id, skin_id, note = cls._parse_suffix(suffix, preserve_strings)
 
-        match items:
-            case [part_id, valkyrie_id, battlesuit_id, *suffix]:
-                pass
+        parts = registry.parts_by_no[part_no]
+        valkyrie_id   = cls._validate_id(valkyrie_id,   preserve_strings=preserve_strings, model=Valkyrie  )
+        battlesuit_id = cls._validate_id(battlesuit_id, preserve_strings=preserve_strings, model=Battlesuit)
 
-            case [part_id, valkyrie_id]:
-                raise MissingBattlesuitIDError(components)
-
-            case [part_id]:
-                raise MissingValkyrieIDError(components)
-
-            case _:
-                raise MissingPartIDError(components)
-
-        preserved_fields: dict[str, str] = {}
-        skin_rarity_id, skin_id, note = cls._parse_suffix(suffix) # pyright: ignore[reportArgumentType]
-
-        raw = cls(
-            part_id,
-            valkyrie_id,
-            battlesuit_id,
-            skin_rarity_id,
-            skin_id,
-            note
-        )
-
-        validated = raw.validated(preserve_strings=preserve_strings)
-
-        if not preserve_strings:
-            return replace(validated, **preserved_fields)
-
-        return validated
+        for part in parts:
+            yield RawAvatar(
+                part_id        = part.id,
+                valkyrie_id    = valkyrie_id,
+                battlesuit_id  = battlesuit_id,
+                skin_rarity_id = skin_rarity_id,
+                skin_id        = skin_id,
+                note           = note
+            )
 
     @classmethod
     def _parse_id(cls, id: str) -> tuple[str, str, str]:
