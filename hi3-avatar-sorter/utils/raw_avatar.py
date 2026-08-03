@@ -50,7 +50,7 @@ class RawAvatar:
 
 
     @classmethod
-    def validate_id(cls, id: str) -> str:
+    def _validate_id(cls, id: str) -> str:
         """
         Validate and normalize given Avatar ID.
 
@@ -63,7 +63,7 @@ class RawAvatar:
         return BaseModel.validate_id.__func__(cls, id)
 
     @staticmethod
-    def validate_note(note: str | None) -> str:
+    def _validate_note(note: str | None) -> str:
         """
         Normalize and validate given note string.
 
@@ -135,7 +135,7 @@ class RawAvatar:
                 validated_fields["skin_id"] = skin_id
 
         if self.note is not None:
-            note: str | None = self.validate_note(self.note)
+            note: str | None = self._validate_note(self.note)
             validated_fields["note"] = note
 
         return type(self)(**validated_fields)
@@ -235,7 +235,7 @@ class RawAvatar:
         Returns:
             `tuple[str, str, str]`: `part_id`, `valkyrie_id`, and `battlesuit_id`.
         """
-        id = cls.validate_id(id)
+        id = cls._validate_id(id)
 
         # Part ID, Valkyrie ID, and Battlesuit ID appear next to each other in the Avatar ID
         pos = 0
