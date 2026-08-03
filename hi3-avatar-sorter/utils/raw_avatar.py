@@ -163,8 +163,8 @@ class RawAvatar:
             raise MissingAvatarIDError(string)
 
         avatar_id, *suffix = parts
-        part_id, valkyrie_id, battlesuit_id = cls.parse_id(avatar_id)
-        skin_rarity_id, skin_id, note = cls.parse_suffix(suffix)
+        part_id, valkyrie_id, battlesuit_id = cls._parse_id(avatar_id)
+        skin_rarity_id, skin_id, note = cls._parse_suffix(suffix)
 
         return cls(part_id, valkyrie_id, battlesuit_id, skin_rarity_id, skin_id, note).validated()
 
@@ -205,7 +205,7 @@ class RawAvatar:
 
             return str(value)
 
-        skin_rarity_id, skin_id, note = cls.parse_suffix(suffix) # pyright: ignore[reportArgumentType]
+        skin_rarity_id, skin_id, note = cls._parse_suffix(suffix) # pyright: ignore[reportArgumentType]
 
         raw = cls(
             coerce("part_id", part_id),
@@ -224,7 +224,7 @@ class RawAvatar:
         return validated
 
     @classmethod
-    def parse_id(cls, id: str) -> tuple[str, str, str]:
+    def _parse_id(cls, id: str) -> tuple[str, str, str]:
         """
         Parse `part_id`, `valkyrie_id`, and `battlesuit_id` from given Avatar ID.
 
@@ -250,7 +250,7 @@ class RawAvatar:
         return part_id, valkyrie_id, battlesuit_id
 
     @classmethod
-    def parse_suffix(cls, suffix: Iterable[str]) -> (
+    def _parse_suffix(cls, suffix: Iterable[str]) -> (
         tuple[None, None, None] |
         tuple[None, None, str ] |
         tuple[str,  str,  None] |
