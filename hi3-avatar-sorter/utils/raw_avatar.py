@@ -9,7 +9,7 @@ from ..models import BaseModel, Battlesuit, Part, Skin, SkinRarity, Valkyrie
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ..fixers.types import AvatarComponents
+    from ..types import AvatarComponents
     from ..registry import AvatarRegistry
 
 
