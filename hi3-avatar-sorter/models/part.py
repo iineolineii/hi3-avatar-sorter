@@ -13,20 +13,12 @@ if TYPE_CHECKING:
 
 
 class Part(BaseModel, HasChildren["Valkyrie"]):
-    id: str = field(compare=False)
-    no: "PartNumber" = field(init=True)
+    no: int
     id_format: "PartIDFormat"
 
     id_length: ClassVar[int] = 3
 
-    @classmethod
-    def validate_id(cls, id: str) -> str:
-        id = BaseModel.validate_id.__func__(cls, id)
-
-        if id not in RAW_PARTS_MAP:
-            raise UnknownPartIDError(id)
-
-        return id
+    valid_ids: ClassVar[set[str]] = {"000", "002", "006", "302", "062", "001", "202"}
 
     def build_valkyries_map(self, raw_valkyries: Iterable[tuple[str, str, int] | tuple[str, str]]):
         """

@@ -1,7 +1,7 @@
 from dataclasses import Field, dataclass, field
 from typing import Any, ClassVar, dataclass_transform
 
-from ..errors import NonNumericIDError, TooLongIDError
+from ..errors import NonNumericIDError, TooLongIDError, UnknownIDError
 from ..utils import capitalize
 
 MISSING = 0
@@ -28,14 +28,23 @@ class _BaseModelMeta(type):
 
 class BaseModel(metaclass=_BaseModelMeta):
     no: int = field(init=False, default=MISSING)
+    id: str
+
     id_length: ClassVar[int] = 2
+    valid_ids: ClassVar[set[str]] = set()
+    __dataclass_fields__: ClassVar[dict[str, Field]] = {}
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls.valid_ids = cls.valid_ids or set()
+        cls.__dataclass_fields__ = cls.__dataclass_fields__ or {}
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "id", self.validate_id(self.id))
+        object.__setattr__(self, "id", self._validate_id(self.id))
 
     @classmethod
-    def validate_id(cls, id: str) -> str:
-        id = id.strip().rjust(cls.id_length, "0")
+    def _validate_id(cls, id: int | str) -> str:
+        id = str(id).strip().rjust(cls.id_length, "0")
 
         if not id.isnumeric():
             raise NonNumericIDError(id, cls.__name__)
@@ -43,7 +52,13 @@ class BaseModel(metaclass=_BaseModelMeta):
         if len(id) > cls.id_length:
             raise TooLongIDError(id, cls.id_length, cls.__name__)
 
+        if cls.valid_ids and id not in cls.valid_ids:
+            raise UnknownIDError(id, cls.valid_ids, cls.__name__)
+
         return id
+
+    def _update_no(self, value: int) -> None:
+        object.__setattr__(self, "no", value)
 
     def __int__(self) -> int:
         return self.no

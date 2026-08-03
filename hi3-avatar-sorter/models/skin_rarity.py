@@ -1,8 +1,6 @@
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
-from .base import BaseModel
-from ..errors import UnknownSkinRarityIDError
+from . import BaseModel
 from ..mixins import HasChildren
 from ..utils import capitalize
 
@@ -11,16 +9,7 @@ if TYPE_CHECKING:
 
 
 class SkinRarity(BaseModel, HasChildren["Skin"]):
-    valid_ids: ClassVar[Iterable[str]] = ("02", "03", "04", "05")
-
-    @classmethod
-    def validate_id(cls, id: str) -> str:
-        id = BaseModel.validate_id.__func__(cls, id)
-
-        if id not in cls.valid_ids:
-            raise UnknownSkinRarityIDError(id)
-
-        return id
+    valid_ids = {"02", "03", "04"}
 
     def __int__(self) -> int:
         return int(self.id)
