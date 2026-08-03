@@ -169,25 +169,25 @@ class RawAvatar:
         return cls(part_id, valkyrie_id, battlesuit_id, skin_rarity_id, skin_id, note).validated()
 
     @classmethod
-    def from_iterable(
+    def from_components(
         cls,
-        iterable: Iterable[int | str],
+        components: Iterable[int | str],
         validate_string_ids: bool = True
     ) -> Self:
-        items = list(iterable)
+        items = list(components)
 
         match items:
             case [part_id, valkyrie_id, battlesuit_id, *suffix]:
                 pass
 
             case [part_id, valkyrie_id]:
-                raise MissingBattlesuitIDError(iterable)
+                raise MissingBattlesuitIDError(components)
 
             case [part_id]:
-                raise MissingValkyrieIDError(iterable)
+                raise MissingValkyrieIDError(components)
 
             case _:
-                raise MissingPartIDError(iterable)
+                raise MissingPartIDError(components)
 
         preserved_fields: dict[str, str] = {}
 
