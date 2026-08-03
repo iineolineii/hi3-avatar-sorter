@@ -1,36 +1,22 @@
-from collections.abc import Callable, Iterable, Iterator, Sequence
-from dataclasses import asdict, dataclass, replace
+from collections.abc import Iterator, Sequence
+from dataclasses import dataclass
 from functools import partial
-from typing import Any, ClassVar, Self, overload
+from typing import TYPE_CHECKING, Any, ClassVar, final
 
-from ..models.base import BaseModel
-from ..models.battlesuit import Battlesuit
-from ..models.part import Part
-from ..models.skin import Skin
-from ..models.skin_rarity import SkinRarity
-from ..models.valkyrie import Valkyrie
-from ..errors import (
-    EmptyNoteError,
-    MissingAvatarIDError,
-    MissingBattlesuitIDError,
-    MissingPartIDError,
-    MissingSkinIDError,
-    MissingSkinRarityIDError,
-    MissingValkyrieIDError,
-    TooLongSuffixError
-)
-from ..registry import AvatarRegistry
+from ..errors import EmptyNoteError, MissingFieldError, TooLongSuffixError
+from ..models import BaseModel, Battlesuit, Part, Skin, SkinRarity, Valkyrie
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from ..fixers.types import AvatarComponents
+    from ..registry import AvatarRegistry
 
 
-@dataclass(frozen=True, slots=True)
+# TODO: Improve validation documentation
+@final
+@dataclass(frozen=True)
 class RawAvatar:
-    """
-    An immutable raw representation of an avatar.
-
-    Represents parsed input data in a normalized,
-    low-level form before it is transformed
-    into the `Avatar` model.
-    """
     part_id:        str
     valkyrie_id:    str
     battlesuit_id:  str
@@ -45,128 +31,16 @@ class RawAvatar:
     @property
     def id(self) -> str:
         """
-        Normalized Avatar ID as a concatenation of `part_id`,
-        `valkyrie_id`, and `battlesuit_id`.
+        Normalized Avatar ID as a concatenation of `part_ID`,
+        `valkyrie_ID`, and `battlesuit_ID`.
         """
         return f"{self.part_id}{self.valkyrie_id}{self.battlesuit_id}"
 
 
     @classmethod
-    def _validate_id(
-        cls,
-        id: int | str,
-        *,
-        preserve_strings: bool = False,
-        model: type["BaseModel"] | None = None
-    ) -> str:
-        if model is None:
-            validator = partial(cls._validate_id.__func__, cls, preserve_strings=preserve_strings, model=BaseModel)
-        else:
-            validator = cls._validate_id
-
-        if isinstance(id, str) and preserve_strings, preserve_strings=preserve_strings, model=model:
-            return str(id)
-
-        return validator(id)
-
-
-    @staticmethod
-    def _validate_note(note: Any) -> str:
-        """
-        Normalize and validate given note string.
-
-        Args:
-            note (`Any`):
-                Raw note.
-
-        Raises:
-            `EmptyNoteError`:
-                If the note is empty or `None`.
-
-        Returns:
-            `str`: Formatted note.
-        """
-        if not note:
-            raise EmptyNoteError(note)
-
-        note = note.lower()
-
-        if note not in RawAvatar.known_notes:
-            RawAvatar.known_notes[note] = len(RawAvatar.known_notes)
-
-        return note
-
-    def validated(self, preserve_strings: bool = False) -> Self:
-        validated_fields: dict[str, Any] = {}
-
-        part_id: str = self._validate_id(self.part_id, preserve_strings=preserve_strings, model=Part)
-        validated_fields["part_id"] = part_id
-
-        valkyrie_id: str = self._validate_id(self.valkyrie_id, preserve_strings=preserve_strings, model=Valkyrie)
-        validated_fields["valkyrie_id"] = valkyrie_id
-
-        battlesuit_id: str = self._validate_id(self.battlesuit_id, preserve_strings=preserve_strings, model=Battlesuit)
-        validated_fields["battlesuit_id"] = battlesuit_id
-
-        match (self.skin_rarity_id, self.skin_id):
-            case (None, None):
-                skin_rarity_id: str | None = None
-                validated_fields["skin_rarity_id"] = skin_rarity_id
-
-                skin_id: str | None = None
-                validated_fields["skin_id"] = skin_id
-
-            case (_, None):
-                raise MissingSkinIDError(asdict(self))
-
-            case (None, _):
-                raise MissingSkinRarityIDError(asdict(self))
-
-            case _:
-                skin_rarity_id: str | None = self._validate_id(self.skin_rarity_id, preserve_strings=preserve_strings, model=SkinRarity)
-                validated_fields["skin_rarity_id"] = skin_rarity_id
-
-                skin_id: str | None = self._validate_id(self.skin_id, preserve_strings=preserve_strings, model=Skin)
-                validated_fields["skin_id"] = skin_id
-
-        if self.note is not None:
-            note: str | None = self._validate_note(self.note)
-            validated_fields["note"] = note
-
-        return type(self)(**validated_fields)
-
-
-    @classmethod
-    def from_string(cls, string: str) -> Self:
-        """
-        Parse a raw avatar from a string representation.
-
-        Args:
-            string (`str`):
-                Source string in one of the supported raw avatar formats.
-
-        Raises:
-            `MissingAvatarIDError`:
-                If the string does not contain an avatar identifier.
-
-        Returns:
-            `Self`: Parsed raw avatar.
-        """
-        components = string.split("_", maxsplit=3)
-
-        if not components or not components[0]:
-            raise MissingAvatarIDError(string)
-
-        avatar_id, *suffix = components
-        part_id, valkyrie_id, battlesuit_id = cls._parse_id(avatar_id)
-        skin_rarity_id, skin_id, note = cls._parse_suffix(suffix)
-
-        return cls(part_id, valkyrie_id, battlesuit_id, skin_rarity_id, skin_id, note).validated()
-
-    @classmethod
     def from_components(
         cls,
-        components: Iterable[int | str],
+        components: "AvatarComponents",
         registry: "AvatarRegistry",
         *,
         preserve_strings: bool = False
@@ -188,23 +62,44 @@ class RawAvatar:
                 note           = note
             )
 
+
+    @classmethod
+    def from_string(cls, string: str) -> "Self":
+        components = string.split("_", maxsplit=3)
+
+        if not components or not components[0]:
+            raise MissingFieldError("Avatar ID", string)
+
+        avatar_id, *suffix = components
+        part_id, valkyrie_id, battlesuit_id = cls._parse_id(avatar_id)
+        skin_rarity_id, skin_id, note = cls._parse_suffix(suffix, preserve_strings=False)
+
+        return cls(
+            part_id,
+            valkyrie_id,
+            battlesuit_id,
+            skin_rarity_id,
+            skin_id,
+            note
+        )
+
+
     @classmethod
     def _parse_id(cls, id: str) -> tuple[str, str, str]:
         """
-        Parse `part_id`, `valkyrie_id`, and `battlesuit_id` from given Avatar ID.
+        Parse `part_ID`, `valkyrie_ID`, and `battlesuit_ID` from given Avatar ID.
 
-        Args:
-            id (`str`):
-                The ID to parse.
+        :param ID: The ID to parse.
+        :type ID: str
 
-        Returns:
-            `tuple[str, str, str]`: `part_id`, `valkyrie_id`, and `battlesuit_id`.
+        :return: A tuple containing `part_ID`, `valkyrie_ID`, and `battlesuit_ID`.
+        :rtype: tuple[str, str, str]
         """
         id = cls._validate_id(id)
 
         # Part ID, Valkyrie ID, and Battlesuit ID appear next to each other in the Avatar ID
         pos = 0
-        part_id       = id[pos:pos+Part.id_length]
+        part_id       = str(id[pos:pos+Part.id_length])
 
         pos += Part.id_length
         valkyrie_id   = id[pos:pos+Valkyrie.id_length]
@@ -214,11 +109,12 @@ class RawAvatar:
 
         return part_id, valkyrie_id, battlesuit_id
 
+
     @classmethod
     def _parse_suffix(
         cls,
         suffix: Sequence[int | str],
-        preserve_strings: bool = False
+        preserve_strings: bool
     ) -> (
         tuple[None, None, None] |
         tuple[None, None, str ] |
@@ -282,6 +178,39 @@ class RawAvatar:
                 raise TooLongSuffixError(suffix)
 
 
+    @classmethod
+    def _validate_id(
+        cls,
+        id: int | str,
+        *,
+        preserve_strings: bool = False,
+        model: type["BaseModel"] | None = None
+    ) -> str:
+        if model is None:
+            validator = partial(BaseModel._validate_id.__func__, cls)
+        else:
+            validator = model._validate_id
+
+        if isinstance(id, str) and preserve_strings:
+            return str(id)
+
+        return validator(id)
+
+
+    @classmethod
+    def _validate_note(cls, note: Any) -> str:
+        if not isinstance(note, str):
+            raise TypeError # TODO: Custom exception class
+
+        if not note:
+            raise EmptyNoteError(note)
+
+        if note not in cls.known_notes:
+            cls.known_notes[note] = len(cls.known_notes)
+
+        return note
+
+
     def __repr__(self) -> str:
         # Example: 60203_04_05_Special
         result = self.id
@@ -292,21 +221,21 @@ class RawAvatar:
         if self.note:
             result += f"_{self.note}"
 
-        return result.lower().lstrip("0")
+        return result.lstrip("0")
 
 
     def __int__(self):
         result = self.id
 
         if self.skin_rarity_id is not None and self.skin_id is not None:
-            result += self.skin_rarity_id
-            result += self.skin_id
+            result += str(self.skin_rarity_id)
+            result += str(self.skin_id)
         else:
             result += "0" * SkinRarity.id_length
             result += "0" * Skin.id_length
 
         if self.note is not None:
-            note_index = RawAvatar.known_notes[self.note]
+            note_index = self.known_notes[self.note]
             result += str(note_index+1)
         else:
             result += "0"
@@ -317,6 +246,3 @@ class RawAvatar:
             result += "0"
 
         return int(result)
-
-
-__all__ = ["RawAvatar"]
