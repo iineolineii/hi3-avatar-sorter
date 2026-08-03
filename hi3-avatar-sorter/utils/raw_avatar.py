@@ -1,5 +1,6 @@
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import asdict, dataclass, replace
+from functools import partial
 from typing import Any, ClassVar, Self, overload
 
 from ..models.base import BaseModel
@@ -50,17 +51,23 @@ class RawAvatar:
 
 
     @classmethod
-    def _validate_id(cls, id: str) -> str:
-        """
-        Validate and normalize given Avatar ID.
+    def _validate_id(
+        cls,
+        id: int | str,
+        *,
+        preserve_strings: bool = False,
+        model: type["BaseModel"] | None = None
+    ) -> str:
+        if model is None:
+            validator = partial(cls._validate_id.__func__, cls, preserve_strings=preserve_strings, model=BaseModel)
+        else:
+            validator = cls._validate_id
 
-        Args:
-            id (`str`): ID to validate.
+        if isinstance(id, str) and preserve_strings, preserve_strings=preserve_strings, model=model:
+            return str(id)
 
-        Returns:
-            `str`: The validated and normalized ID.
-        """
-        return BaseModel.validate_id.__func__(cls, id)
+        return validator(id)
+
 
     @staticmethod
     def _validate_note(note: Any) -> str:
@@ -88,29 +95,16 @@ class RawAvatar:
 
         return note
 
-    def validated(self) -> Self:
-        """
-        Return a copy of this instance with all of its fields validated and normalized.
-
-        Raises:
-            `MissingSkinIDError`:
-                If `skin_rarity_id` is provided but `skin_id` is missing.
-
-            `MissingSkinRarityIDError`:
-                If `skin_id` is provided without `skin_rarity_id`.
-
-        Returns:
-            `Self`: The validated and normalized model instance.
-        """
+    def validated(self, preserve_strings: bool = False) -> Self:
         validated_fields: dict[str, Any] = {}
 
-        part_id: str = Part.validate_id(self.part_id)
+        part_id: str = self._validate_id(self.part_id, preserve_strings=preserve_strings, model=Part)
         validated_fields["part_id"] = part_id
 
-        valkyrie_id: str = Valkyrie.validate_id(self.valkyrie_id)
+        valkyrie_id: str = self._validate_id(self.valkyrie_id, preserve_strings=preserve_strings, model=Valkyrie)
         validated_fields["valkyrie_id"] = valkyrie_id
 
-        battlesuit_id: str = Battlesuit.validate_id(self.battlesuit_id)
+        battlesuit_id: str = self._validate_id(self.battlesuit_id, preserve_strings=preserve_strings, model=Battlesuit)
         validated_fields["battlesuit_id"] = battlesuit_id
 
         match (self.skin_rarity_id, self.skin_id):
@@ -128,10 +122,10 @@ class RawAvatar:
                 raise MissingSkinRarityIDError(asdict(self))
 
             case _:
-                skin_rarity_id: str | None = SkinRarity.validate_id(self.skin_rarity_id)
+                skin_rarity_id: str | None = self._validate_id(self.skin_rarity_id, preserve_strings=preserve_strings, model=SkinRarity)
                 validated_fields["skin_rarity_id"] = skin_rarity_id
 
-                skin_id: str | None = Skin.validate_id(self.skin_id)
+                skin_id: str | None = self._validate_id(self.skin_id, preserve_strings=preserve_strings, model=Skin)
                 validated_fields["skin_id"] = skin_id
 
         if self.note is not None:
@@ -190,33 +184,18 @@ class RawAvatar:
                 raise MissingPartIDError(components)
 
         preserved_fields: dict[str, str] = {}
-
-        @overload
-        def coerce(name: str, value: None) -> None: ...
-        @overload
-        def coerce(name: str, value: int | str) -> str: ...
-        def coerce(name: str, value: int | str | None) -> str | None:
-            if value is None:
-                return None
-
-            if preserve_strings and isinstance(value, str):
-                preserved_fields[name] = value
-                return ""
-
-            return str(value)
-
         skin_rarity_id, skin_id, note = cls._parse_suffix(suffix) # pyright: ignore[reportArgumentType]
 
         raw = cls(
-            coerce("part_id", part_id),
-            coerce("valkyrie_id", valkyrie_id),
-            coerce("battlesuit_id", battlesuit_id),
-            coerce("skin_rarity_id", skin_rarity_id),
-            coerce("skin_id", skin_id),
+            part_id,
+            valkyrie_id,
+            battlesuit_id,
+            skin_rarity_id,
+            skin_id,
             note
         )
 
-        validated = raw.validated()
+        validated = raw.validated(preserve_strings=preserve_strings)
 
         if not preserve_strings:
             return replace(validated, **preserved_fields)
@@ -252,7 +231,8 @@ class RawAvatar:
     @classmethod
     def _parse_suffix(
         cls,
-        suffix: Sequence[int | str]
+        suffix: Sequence[int | str],
+        preserve_strings: bool = False
     ) -> (
         tuple[None, None, None] |
         tuple[None, None, str ] |
@@ -292,15 +272,15 @@ class RawAvatar:
 
         match suffix:
             case [skin_rarity_id, skin_id, note]:
-                skin_rarity_id = SkinRarity._validate_id(skin_rarity_id)
-                skin_id = Skin._validate_id(skin_id)
+                skin_rarity_id = cls._validate_id(skin_rarity_id, preserve_strings=preserve_strings, model=SkinRarity)
+                skin_id = cls._validate_id(skin_id, preserve_strings=preserve_strings, model=Skin)
                 note = cls._validate_note(note)
 
                 return (skin_rarity_id, skin_id, note)
 
             case [skin_rarity_id, skin_id]:
-                skin_rarity_id = SkinRarity._validate_id(skin_rarity_id)
-                skin_id = Skin._validate_id(skin_id)
+                skin_rarity_id = cls._validate_id(skin_rarity_id, preserve_strings=preserve_strings, model=SkinRarity)
+                skin_id = cls._validate_id(skin_id, preserve_strings=preserve_strings, model=Skin)
 
                 return (skin_rarity_id, skin_id, note)
 
