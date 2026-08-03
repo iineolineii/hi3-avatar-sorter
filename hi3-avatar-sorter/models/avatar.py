@@ -1,55 +1,39 @@
 from collections.abc import Iterable, Iterator
-from dataclasses import InitVar, dataclass, field
-from functools import cached_property, lru_cache
+from dataclasses import dataclass
+from functools import lru_cache
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
-from .meta import AvatarMeta
-from .raw import RawAvatar
-from ..base import BaseModel
-from ..battlesuit import Battlesuit
-from ..part import Part
-from ..skin import Skin
-from ..skin_rarity import SkinRarity
-from ..valkyrie import Valkyrie
-from ...errors import UnknownPartIDError, UnknownPartNoError
+from ...enums import PartIDFormat
+from ...errors import UnknownPartIDError
 
 if TYPE_CHECKING:
-    from ...enums import PartIDFormat, PartNumber
+    from . import Battlesuit, Part, Valkyrie, Skin, SkinRarity
+    from ..utils.raw_avatar import RawAvatar
 
 
-@dataclass(frozen=True, slots=True)
-class Avatar(BaseModel, metaclass=AvatarMeta):
+@dataclass(frozen=True)
+class Avatar:
     """
-    High-level avatar model.
+    High-level avatar domain model.
 
     Represents a fully assembled avatar with normalized components.
-    Wraps a `RawAvatar` instance into domain objects (`Part`, `Valkyrie`,
-    `Battlesuit`, `SkinRarity`, `Skin`).
+    Wraps a :class:`RawAvatar` instance into domain objects.
     """
-    part:        Part
-    valkyrie:    Valkyrie
-    battlesuit:  Battlesuit
-    skin_rarity: SkinRarity | None = None
-    skin:        Skin       | None = None
-    note:        str        | None = None
+    no:          "int"
+    raw:         "RawAvatar"
+    part:        "Part"
+    valkyrie:    "Valkyrie"
+    battlesuit:  "Battlesuit"
+    skin_rarity: "SkinRarity | None" = None
+    skin:        "Skin       | None" = None
+    note:        "str        | None" = None
 
     parts: ClassVar[MappingProxyType[str, Part]]
     id_length: ClassVar[int] = Part.id_length + Valkyrie.id_length + Battlesuit.id_length
 
-    raw: RawAvatar = field(init=False, repr=False)
     """
     Original `RawAvatar` DTO used to construct this model.
-
-    Note:
-        This attribute is not present if the instance was not
-        created via any of the `from_<something>` factory methods.
-    """
-
-    no: int = field(init=False, repr=False)
-    """
-    Unique index of original `RawAvatar` DTO used to construct this model.
-    Should always be equal to its integer representation.
 
     Note:
         This attribute is not present if the instance was not
@@ -83,7 +67,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
     # the result is computed using loops
     # and the children container is immutable.
     # Otherwise it may produce stale or misleading results.
-    def get_part_by_no(cls, part_no: "PartNumber", part_id_format: "PartIDFormat") -> list[Part]:
+    def get_part_by_no(cls, part_no: "int", part_id_format: "PartIDFormat") -> list[Part]:
         """
         Retrieve all `Part`s with the given number and ID format.
 
@@ -114,12 +98,12 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
 
 
     @classmethod
-    def build_parts_map(cls, raw_parts: dict[str, tuple["PartIDFormat", "PartNumber"]]) -> MappingProxyType[str, "Part"]:
+    def build_parts_map(cls, raw_parts: dict[str, tuple["PartIDFormat", "int"]]) -> MappingProxyType[str, "Part"]:
         """
         Build a read-only mapping of Part IDs to their :class:`Part` instances.
 
         :param raw_parts: Source mapping from Part ID to a tuple containing Part ID format and Part number.
-        :type raw_parts: dict[str, tuple[:class:`PartIDFormat`, :class:`PartNumber`]]
+        :type raw_parts: dict[str, tuple[:class:`PartIDFormat`, int]]
 
         :return: Read-only mapping of Part IDs to their :class:`Part` instances.
         :rtype: MappingProxyType[str, :class:`Part`]
@@ -144,30 +128,26 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         Returns:
             `Self`: Fully assembled avatar model.
         """
-        part = cls.get_part(raw.part_id)
-        valkyrie = part.get_valkyrie(raw.valkyrie_id, raw.battlesuit_id)
-        battlesuit = valkyrie.get_or_add_battlesuit(Battlesuit(id=raw.battlesuit_id))
+        no = int(raw)
+        id = raw.id
+
+        part       = cls.get_part(raw.part)
+        valkyrie   = cls.part.add_child(Valkyrie(raw.valkyrie_id))
+        battlesuit = valkyrie.add_child(Battlesuit(raw.battlesuit_id), exists_ok=True)
 
         if raw.skin_rarity_id is not None and raw.skin_id is not None:
-            skin_rarity = battlesuit.get_or_add_skin_rarity(SkinRarity(id=raw.skin_rarity_id))
-            skin = skin_rarity.get_or_add_skin(Skin(id=raw.skin_id))
+            skin_rarity = battlesuit.add_child(SkinRarity(raw.skin_rarity_id), exists_ok=True)
+            skin        = skin_rarity.add_child(Skin(raw.skin_id), exists_ok=True)
         else:
             skin_rarity = skin = None
 
-        note = RawAvatar.validate_note(raw.note) if raw.note is not None else None
+        note = raw.note
 
-        self = cls(
-            id=raw.id,
-            part=part,
-            valkyrie=valkyrie,
-            battlesuit=battlesuit,
-            skin_rarity=skin_rarity,
-            skin=skin,
-            note=note
+        return cls(
+            no, id, raw,
+            part, valkyrie, battlesuit,
+            skin_rarity, skin, note
         )
-        object.__setattr__(self, "raw", raw)
-        object.__setattr__(self, "no", int(raw))
-        return self
 
 
     @classmethod
@@ -199,27 +179,7 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         """
         return cls.from_raw(RawAvatar.from_iterable(iterable))
 
-
-    def __getattribute__(self, name: str) -> Any:
-        try:
-            return BaseModel.__getattribute__(self, name)
-
-        except AttributeError:
-            class_name = type(self).__name__
-            base_message = f"{class_name!r} object has no attribute {name!r}."
-
-            if name == "raw":
-                raise AttributeError(
-                    base_message +
-                    f" Perhaps it was not created via any of the "
-                    f"'{class_name}.from_<something>' factory methods?"
-                )
-
-            raise
-
-
     def __iter__(self) -> Iterator[str]:
-        # Example: ["01", "02", "03", "04", "05", "Special"]
         result = [f"{self.part.no:02}", f"{self.valkyrie.no:02}", f"{self.battlesuit.no:02}"]
 
         if self.skin_rarity is not None and self.skin is not None:
@@ -231,7 +191,8 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         return iter(result)
 
     def __int__(self) -> int:
-        # Example: 0102030405 or 0102030000
+        from . import Skin, SkinRarity
+
         result = f"{self.part.no:02}{self.valkyrie.no:02}{self.battlesuit.no:02}"
 
         if self.skin_rarity is not None and self.skin is not None:
@@ -243,7 +204,6 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         return int(result)
 
     def __repr__(self) -> str:
-        # Example: 010203_04_05_Special
         result = f"{self.part.no:02}{self.valkyrie.no:02}{self.battlesuit.no:02}"
 
         if self.skin_rarity is not None and self.skin is not None:
@@ -252,27 +212,18 @@ class Avatar(BaseModel, metaclass=AvatarMeta):
         if self.note:
             result += f"_{self.note}"
 
-        return result.lower().lstrip("0")
+        return result.lstrip("0")
 
     def __str__(self) -> str:
-        # Example: Raiden Mei №3, Skin 4★ №5, Special
         result = f"{self.valkyrie.name} №{self.battlesuit.no}"
 
         if self.skin_rarity is not None and self.skin is not None:
             result += f", Skin {self.skin_rarity.no}★ №{self.skin.no}"
 
-        if self.note:
-            note = self.note.capitalize()
+        if self.note == "B":
+            result += f", Veliona"
 
-            if note == "B":
-                note = "Veliona"
-
-            elif note == "Shadowicon":
-                note = "ShadowIcon"
-
-            result += f", {note}"
+        elif self.note:
+            result += f", {self.note}"
 
         return result
-
-
-__all__ = ["Avatar"]
