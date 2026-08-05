@@ -14,8 +14,15 @@ DEFAULT_VALID_IDS = set(map(str, range(MAX_MODEL_ID)))
     field_specifiers=(field,)
 )
 class _BaseModelMeta(type):
-    def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], /, **kwds: Any) -> type["BaseModel"]:
-        klass: Any = super().__new__(cls, name, bases, namespace, **kwds)
+    def __new__(
+        cls,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        /,
+        **kwds: Any
+    ) -> type["_BaseModelMeta"]:
+        cls = super().__new__(cls, name, bases, namespace, **kwds)
 
         transform: dict[str, Any] = getattr(_BaseModelMeta, "__dataclass_transform__")
         eq:        bool = transform["eq_default"]
@@ -24,7 +31,7 @@ class _BaseModelMeta(type):
         frozen:    bool = transform["frozen_default"]
         kwargs:    dict = transform["kwargs"]
 
-        return dataclass(klass, eq=eq, order=order, kw_only=kw_only, frozen=frozen, **kwargs)
+        return dataclass(eq=eq, order=order, kw_only=kw_only, frozen=frozen, **kwargs)(cls)
 
 
 class BaseModel(metaclass=_BaseModelMeta):
