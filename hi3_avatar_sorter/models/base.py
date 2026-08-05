@@ -14,6 +14,8 @@ DEFAULT_VALID_IDS = set(map(str, range(MAX_MODEL_ID)))
     field_specifiers=(field,)
 )
 class _BaseModelMeta(type):
+    __dataclass_fields__: dict[str, Field]
+
     def __new__(
         cls,
         name: str,
@@ -23,6 +25,8 @@ class _BaseModelMeta(type):
         **kwds: Any
     ) -> type["_BaseModelMeta"]:
         cls = super().__new__(cls, name, bases, namespace, **kwds)
+        if not hasattr(cls, "__dataclass_fields__"):
+            cls.__dataclass_fields__ = {}
 
         transform: dict[str, Any] = getattr(_BaseModelMeta, "__dataclass_transform__")
         eq:        bool = transform["eq_default"]
@@ -40,7 +44,6 @@ class BaseModel(metaclass=_BaseModelMeta):
 
     id_length: ClassVar[int] = 2
     valid_ids: ClassVar[set[str]] = DEFAULT_VALID_IDS
-    __dataclass_fields__: ClassVar[dict[str, Field]] = {}
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
